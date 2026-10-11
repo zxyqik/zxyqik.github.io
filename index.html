@@ -952,7 +952,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     return fresh();
   })();
   // SRV не null, когда игра открыта в Telegram и её раздаёт сервер: тогда всё считает сервер.
-  var SRV = null, booting = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+  // offline — текст ошибки, если сервер есть, но войти не удалось: тогда игра ждёт сервер, а не играет в демо.
+  var SRV = null, offline = '', booting = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+  // Адрес игры с сервером. Старая копия на GitHub Pages, открытая из Telegram, перекидывает сюда.
+  var GAME_URL = 'https://fin-hod.online/';
   function save() {
     try {
       if (SRV) localStorage.setItem(KEY + '-prefs', JSON.stringify(G.pick(S, PREF_KEYS)));
@@ -982,18 +985,43 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function connect() {
     if (!tg || !tg.initData) return Promise.resolve(false);
     return fetch('api/ping').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (p) {
-      if (!p || p.app !== 'finhod') return false;
+      if (!p || p.app !== 'finhod') {
+        if (/\.github\.io$/.test(location.hostname)) { toGameServer(); return new Promise(function () {}); }
+        return false;
+      }
       var prefs = null; try { prefs = JSON.parse(localStorage.getItem(KEY + '-prefs')); } catch (e) {}
       var f = fresh(); PREF_KEYS.forEach(function (k) { if (prefs && prefs[k] !== undefined) f[k] = prefs[k]; else if (S[k] !== undefined) f[k] = S[k]; });
-      SRV = { me: null, owners: [] };
-      var demo = S; S = f;
-      return apiCall('api/state').then(function (j) { applyServer(j); return true; },
-        function (e) { SRV = null; S = demo; toast(e.message); return false; });
+      SRV = { me: null, owners: [] }; S = f;
+      return loadState();
     });
+  }
+  function loadState() {
+    return apiCall('api/state').then(function (j) { offline = ''; applyServer(j); return true; },
+      function (e) { offline = e.message; toast(e.message); return false; });
+  }
+  // Данные запуска Telegram передаёт в адресе после «#» — отдаём их серверу вместе с переходом.
+  function toGameServer() {
+    var h = location.hash;
+    if (h.indexOf('tgWebAppData=') < 0) {
+      h = '#tgWebAppData=' + encodeURIComponent(tg.initData) + '&tgWebAppVersion=' + encodeURIComponent(tg.version || '') +
+        '&tgWebAppPlatform=' + encodeURIComponent(tg.platform || '') + '&tgWebAppThemeParams=' + encodeURIComponent(JSON.stringify(tg.themeParams || {}));
+    }
+    location.replace(GAME_URL + h);
+  }
+  // Сервер есть, но вход не удался — повторяем по кнопке; до входа ничего не считается на устройстве.
+  function retryConnect() {
+    booting = true; renderMain();
+    loadState().then(afterConnect);
+  }
+  function afterConnect(ok) {
+    booting = false;
+    if (ok) { current = null; batch = null; upg.ids = []; upg.last = null; devTarget = null; boot(); }
+    else renderMain();
   }
   // Одно действие: на сервере, если он есть, иначе здесь же — тем же кодом из js/game.js.
   function run(op, args) {
     args = args || {};
+    if (offline) return Promise.reject(gameErr(offline));
     if (SRV) return apiCall('api/op', { op: op, args: args }).then(function (j) { applyServer(j); return j.result; });
     try {
       var ctx = { now: Date.now(), user: { username: username() }, admin: isAdmin() }, res;
@@ -1318,6 +1346,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function canIssue(n) { return n <= freeSlots() && affordable(n); }
   function onMain() {
     if (booting) return;
+    if (offline) { retryConnect(); return; }
     if (busy) { if (spinCtl) spinCtl.skip(); return; }
     if (freeSlots() <= 0) { openFullStock(); return; }
     if (canIssue(S.batch)) issue(S.batch);
@@ -1404,6 +1433,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }
     var text, enabled = true, alt = false, n = S.batch;
     if (booting) { text = 'Загрузка…'; enabled = false; alt = true; }
+    else if (offline) { text = 'Нет входа в игру · повторить'; alt = true; }
     else if (busy) { text = spinCtl ? 'Пропустить' : 'Выпускаем…'; enabled = !!spinCtl; alt = true; }
     else if (free <= 0) { text = 'Склад полон · освободить место'; alt = true; }
     else if (canIssue(n)) text = n === 1 ? 'Выпустить номер · ' + money(costOf(1)) : 'Выпустить ' + n + ' ' + plural(n, 'номер', 'номера', 'номеров') + ' · ' + money(costOf(n));
@@ -1455,10 +1485,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   function ic(color, path) { return '<span class="ic" style="background:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg></span>'; }
   var CHEV = '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
-  var VERSION = 'демо 0.10';
+  var VERSION = '0.11';
 
   function openMenu() {
     if (busy || booting) return;
+    if (offline) { toast(offline); return; }
     var st = dailyStatus(), best = S.best ? fmtFull({ c: S.best.c, net: S.best.net, d: S.best.d }) : '—';
     var html = '<div class="group">';
     html += '<button class="row" type="button" id="dailyRow">' + ic('#F2A30F', '<path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1 0 1.5 2.5 1 5 1zM12 7c1.5-3 5-3.5 5-1 0 1.5-2.5 1-5 1z"/>') +
@@ -1487,7 +1518,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
         '<input class="inp mono" id="previewUser" style="max-width:150px;height:36px" placeholder="@username" value="' + esc(S.previewUser || '') + '" aria-label="Юзернейм для предпросмотра"></div></div>';
     }
     html += '<p class="note">' + (SRV ? 'Прогресс хранится на сервере игры.' : 'Демо: прогресс хранится только на этом устройстве.') + '</p>';
-    html += '<p class="ver">Финансовый ход · ' + VERSION + '</p>';
+    html += '<p class="ver">Финансовый ход · ' + (SRV ? 'сервер' : 'демо') + ' ' + VERSION + '</p>';
     openSheet(html);
   }
 
@@ -2802,11 +2833,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }
   }
   boot();
-  connect().then(function (ok) {
-    booting = false;
-    if (ok) { current = null; batch = null; upg.ids = []; upg.last = null; devTarget = null; boot(); }
-    else renderMain();
-  });
+  connect().then(afterConnect);
 })();
 </script>
 
