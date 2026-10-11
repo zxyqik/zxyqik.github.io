@@ -788,10 +788,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 <div class="toast" id="toast" role="status"></div>
 
 <script src="js/engine.js"></script>
+<script src="js/game.js"></script>
 <script>
 (function () {
   'use strict';
-  var E = window.FHEngine;
+  var E = window.FHEngine, G = window.FHGame;
   var COST = E.CONFIG.issueCost;
   var KEY = 'fh-v5'; // семь редкостей и новые регионы — прогресс начинается заново, настройки переносятся
   var tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
@@ -903,35 +904,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   var APP_OP = ['000', 'Финансовый ход', 'app', '#1DAA5C', 'sq'];
 
-  /*
-   * Страны — настоящие коды, операторы и их коды — выдуманные.
-   * Код оператора начинается с 0: во всех этих странах ноль — внутренний префикс набора
-   * и после кода страны не набирается, а в США код зоны не может начинаться с 0 или 1.
-   * Россия и Казахстан делят +7, поэтому коды операторов у них не пересекаются.
-   */
-  // [ключ, название, код, раздел, группы цифр, разделитель, операторы, значок вместо флага]
-  var COUNTRY_LIST = [
-    ['ru', 'Россия', '7', 'main', [3, 2, 2], '-', [['010', 'Гудок', 'bell', '#FF5A3C', 'sq'], ['020', 'Нольтел', 'zero', '#2A2D31', 'ci'], ['030', 'ФинСвязь', 'chev', '#1DAA5C', 'sq'], ['040', 'Сигналыч', 'bars', '#6B57FF', 'sq'], ['050', 'Ход-Мобайл', 'tri', '#F2A30F', 'ci']]],
-    ['jp', 'Япония', '81', 'main', [3, 4], '-', [['010', 'Sakura Mobile', 'spark', '#E8507A', 'ci'], ['020', 'Kaze Tel', 'wave', '#2D6BFF', 'sq'], ['030', 'Neko Net', 'moon', '#2A2D31', 'sq']]],
-    ['de', 'Германия', '49', 'main', [3, 4], ' ', [['010', 'Klingel', 'bell', '#2A2D31', 'sq'], ['020', 'Funkhaus', 'arcs', '#DD0000', 'sq'], ['030', 'Nullnetz', 'zero', '#FFCE00', 'ci']]],
-    ['us', 'США', '1', 'main', [3, 4], '-', [['011', 'Ringo', 'ring', '#E8384F', 'ci'], ['022', 'Zerotel', 'zero', '#2D6BFF', 'sq'], ['033', 'Lucky Line', 'clover', '#1F9D55', 'sq']]],
-    ['kz', 'Казахстан', '7', 'main', [3, 2, 2], '-', [['060', 'Дала Мобайл', 'sun', '#00AFCA', 'ci'], ['070', 'Алтын Тел', 'spark', '#E3A400', 'sq'], ['080', 'Степь', 'wave', '#3E8E5E', 'bare']]],
-    ['th', 'Таиланд', '66', 'main', [3, 4], '-', [['010', 'Siam Line', 'crown', '#2D2A4A', 'sq'], ['020', 'Tuk-Tuk Tel', 'wheel', '#F2A30F', 'ci'], ['030', 'Lotus Mobile', 'tulip', '#E8384F', 'sq']]],
-    ['ae', 'ОАЭ', '971', 'main', [3, 4], ' ', [['010', 'Falcon Mobile', 'chev', '#00732F', 'sq'], ['020', 'Oasis Tel', 'drop', '#00AFCA', 'ci'], ['030', 'Dune Net', 'peak', '#C98A16', 'sq']]],
-    ['cn', 'Китай', '86', 'main', [3, 4], ' ', [['010', 'Long Tel', 'bolt', '#EE1C25', 'sq'], ['020', 'Panda Mobile', 'half', '#2A2D31', 'ci'], ['030', 'Bamboo Net', 'leaf', '#1F9D55', 'sq']]],
-    ['se', 'Швеция', '46', 'main', [3, 2, 2], ' ', [['010', 'Ringa', 'arcs', '#006AA7', 'sq'], ['020', 'Fika Mobil', 'cup', '#FECC02', 'ci'], ['030', 'Älg Tel', 'plus', '#2E7D32', 'sq']]],
-    ['ch', 'Швейцария', '41', 'main', [3, 2, 2], ' ', [['010', 'Alpenhorn', 'peak', '#DA291C', 'sq'], ['020', 'Uhrwerk Tel', 'wheel', '#2A2D31', 'ci'], ['030', 'Käse Mobile', 'grid', '#F2BE3A', 'sq']]],
-    ['anon', 'Аноним', '888', 'special', [3, 2, 2], '-', [['088', 'Аноним Связь', 'half', '#2A2D31', 'ci']], { t: '888', bg: '#0D0F11' }]
-  ];
+  var COUNTRY_LIST = G.COUNTRY_LIST; // страны и операторы — в js/game.js, общие с сервером
   // Встроенные страны + регионы и операторы, созданные в режиме разработчика.
   var COUNTRIES = {}, ORDER = [];
   function rebuildCountries() {
-    COUNTRIES = {}; ORDER = [];
-    function add(c) { COUNTRIES[c.key] = c; ORDER.push(c.key); }
-    COUNTRY_LIST.forEach(function (c) { add({ key: c[0], name: c[1], code: c[2], region: c[3], groups: c[4], sep: c[5], nets: c[6].slice(), badge: c[7] }); });
-    var cu = S.custom;
-    cu.regions.forEach(function (r) { add({ key: r.key, name: r.name, code: r.code, region: 'custom', groups: r.groups, sep: r.sep, badge: r.badge, nets: r.nets.slice() }); });
-    Object.keys(cu.ops).forEach(function (k) { if (COUNTRIES[k]) COUNTRIES[k].nets = COUNTRIES[k].nets.concat(cu.ops[k]); });
+    var cs = G.countries(S); COUNTRIES = cs.map; ORDER = cs.order;
     if (S.country !== 'any' && !COUNTRIES[S.country]) S.country = 'ru';
     S.favs = S.favs.filter(function (k) { return COUNTRIES[k]; });
   }
@@ -950,19 +927,18 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function fmtFull(item) { return '+' + countryOf(item.c).code + ' (' + item.net + ') ' + fmtDigits(item.d, item.c); }
   var SPIN_LINES = ['крутим бурмалду…', 'погнали…', 'ищем красивое…'];
 
-  /* ---------------- состояние (демо: только на этом устройстве) ---------------- */
+  /* ---------------- состояние ---------------- */
+  // Настройки интерфейса живут на устройстве; игрок и мир — в S (в демо тоже здесь, на сервере — копия с сервера).
+  var PREF_KEYS = ['country', 'sound', 'fast', 'theme', 'favs', 'batch', 'stockView', 'previewUser'];
   function fresh() {
-    return { v: 5, country: 'ru', balance: E.CONFIG.startBalance, level: 1, xp: 0, pity: {}, items: [], last: null,
-      daily: { last: null, streak: 0 }, jobAt: 0, sound: true, issued: 0, best: null, batch: 1, custom: { regions: [], ops: {}, admins: [] },
-      favs: [], log: [], tot: {}, buyers: null, event: null, holiday: 'none', upg: { n: 0, win: 0 },
-      promos: [], redeemed: [], adminLog: [], notice: null, buyersNow: false, theme: 'auto' };
+    return Object.assign({ v: 5, country: 'ru', sound: true, batch: 1, favs: [], theme: 'auto' }, G.freshPlayer(), G.freshWorld());
   }
   var S = (function () {
     try {
       var s = JSON.parse(localStorage.getItem(KEY)), f = fresh();
       if (s && s.v === 5) {
         Object.keys(f).forEach(function (k) { if (s[k] === undefined) s[k] = f[k]; });
-        if (!s.custom.admins) s.custom.admins = [];
+        G.normWorld(s);
         return s;
       }
       var old = JSON.parse(localStorage.getItem('fh-v4')) || JSON.parse(localStorage.getItem('fh-v3'));
@@ -975,19 +951,70 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     } catch (e) {}
     return fresh();
   })();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-  // История денег: последние 300 записей + итоги по разделам за всё время.
-  function logMoney(k, a, x, extra) {
-    var e = { t: Date.now(), k: k, a: Math.round(a || 0), x: x };
-    if (extra) Object.keys(extra).forEach(function (p) { e[p] = Math.round(extra[p]); });
-    S.log.unshift(e); if (S.log.length > 300) S.log.length = 300;
-    if (e.a) { var tt = S.tot[k] || (S.tot[k] = [0, 0]); if (e.a < 0) tt[0] -= e.a; else tt[1] += e.a; }
+  // SRV не null, когда игра открыта в Telegram и её раздаёт сервер: тогда всё считает сервер.
+  var SRV = null, booting = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+  function save() {
+    try {
+      if (SRV) localStorage.setItem(KEY + '-prefs', JSON.stringify(G.pick(S, PREF_KEYS)));
+      else localStorage.setItem(KEY, JSON.stringify(S));
+    } catch (e) {}
   }
-  function dayKey(o) { var d = new Date(Date.now() + (o || 0) * 864e5); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-  function dailyStatus() {
-    if (S.daily.last === dayKey(0)) return { available: false };
-    var streak = S.daily.last === dayKey(-1) ? S.daily.streak + 1 : 1;
-    return { available: true, streak: streak, reward: E.dailyReward(streak) };
+  function dayKey(o) { return G.dayKey(Date.now(), o || 0); }
+  function dailyStatus() { return G.dailyStatus(S); }
+
+  /* ---------------- связь с сервером ---------------- */
+  function gameErr(text) { var e = new Error(text); e.game = true; return e; }
+  function apiCall(path, body) {
+    return fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': 'tma ' + tg.initData }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Сервер не ответил. Попробуй ещё раз.' }; }); },
+        function () { return { ok: false, error: 'Нет связи с сервером. Проверь интернет.' }; })
+      .then(function (j) { if (!j || !j.ok) throw gameErr((j && j.error) || 'Ошибка сервера.'); return j; });
+  }
+  function applyServer(j) {
+    var W = j.world;
+    G.PLAYER_KEYS.forEach(function (k) { S[k] = j.player[k]; });
+    ['event', 'notice', 'holiday', 'buyersSeed', 'buyersNow', 'custom'].forEach(function (k) { S[k] = W[k]; });
+    S.promos = W.promos || []; S.adminLog = W.adminLog || [];
+    SRV.me = j.me; SRV.owners = W.owners || [];
+    rebuildCountries(); save();
+  }
+  // Подключение: страница открыта в Telegram, и рядом отвечает сервер игры.
+  function connect() {
+    if (!tg || !tg.initData) return Promise.resolve(false);
+    return fetch('api/ping').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (p) {
+      if (!p || p.app !== 'finhod') return false;
+      var prefs = null; try { prefs = JSON.parse(localStorage.getItem(KEY + '-prefs')); } catch (e) {}
+      var f = fresh(); PREF_KEYS.forEach(function (k) { if (prefs && prefs[k] !== undefined) f[k] = prefs[k]; else if (S[k] !== undefined) f[k] = S[k]; });
+      SRV = { me: null, owners: [] };
+      var demo = S; S = f;
+      return apiCall('api/state').then(function (j) { applyServer(j); return true; },
+        function (e) { SRV = null; S = demo; toast(e.message); return false; });
+    });
+  }
+  // Одно действие: на сервере, если он есть, иначе здесь же — тем же кодом из js/game.js.
+  function run(op, args) {
+    args = args || {};
+    if (SRV) return apiCall('api/op', { op: op, args: args }).then(function (j) { applyServer(j); return j.result; });
+    try {
+      var ctx = { now: Date.now(), user: { username: username() }, admin: isAdmin() }, res;
+      if (op.indexOf('admin.') === 0) {
+        if (!isAdmin()) throw gameErr('Нет доступа.');
+        if (op === 'admin.world') res = G.worldOp(S, args, ctx);
+        else if (op === 'admin.act') { ctx.target = '@' + username(); res = G.adminAct(S, S, args, ctx); res.target = selfSummary(); }
+        else if (op === 'admin.player') res = { player: selfSummary() };
+        else if (op === 'admin.find') {
+          var q = String(args.q || '').toLowerCase().replace(/^@/, '');
+          res = { players: !q || q === username() || q === tgUserId() ? [selfSummary()] : [], total: 1 };
+        } else throw gameErr('Неизвестное действие.');
+      } else res = G.ops[op](S, S, args, ctx);
+      save(); rebuildCountries();
+      return Promise.resolve(res);
+    } catch (e) { return Promise.reject(e); }
+  }
+  function showErr(e) {
+    buzz('hard');
+    toast(e && e.game ? e.message : 'Что-то пошло не так. Попробуй ещё раз.');
+    if (!(e && e.game)) console.warn(e);
   }
 
   /* ---------------- Telegram ---------------- */
@@ -1225,9 +1252,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
 
   /* ---------------- результат ---------------- */
-  var current = null, batch = null, busy = false, seq = 0;
-  var SIZES = [1, 5, 10, 20, 100], CAP = 1000; // CAP — сколько номеров помещается на склад
-  function uid() { seq++; return 'n' + Date.now().toString(36) + seq.toString(36) + Math.random().toString(36).slice(2, 6); }
+  var current = null, batch = null, busy = false;
+  var SIZES = G.SIZES, CAP = G.CAP; // CAP — сколько номеров помещается на склад
   function estimateOf(ev) { return E.marketPrice(ev); }
   function isSecret(ev) { return ev.tier === E.TIER_INDEX.secret; }
   // Одна цена везде: за неё номер и продаётся. Цена Secret не раскрывается — «???».
@@ -1279,25 +1305,19 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
 
   /* ---------------- ивенты: удача или скидка на N выпусков или N часов (включает разработчик) ---------------- */
-  function eventNow() {
-    var e = S.event; if (!e) return null;
-    if ((e.until && Date.now() >= e.until) || (e.left != null && e.left <= 0)) { S.event = null; save(); return null; }
-    return e;
-  }
+  function eventNow() { return G.eventNow(S); }
   function eventTitle(e) { return e.kind === 'luck' ? 'Удача ×' + e.v : 'Скидка ' + Math.round(e.v * 100) + '%'; }
   function eventLeft(e) {
     if (e.left != null) return 'ещё ' + e.left + ' ' + plural(e.left, 'выпуск', 'выпуска', 'выпусков');
     var d = new Date(e.until), today = dayKey(0) === d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
     return 'до ' + (today ? '' : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ') + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   }
-  function costOf(n) {
-    var e = eventNow(), c = E.batchCost(n);
-    return e && e.kind === 'sale' ? Math.round(c * (1 - e.v) / 10) * 10 : c;
-  }
+  function costOf(n) { return G.costOf(S, n); }
 
   function affordable(n) { return S.balance >= costOf(n); }
   function canIssue(n) { return n <= freeSlots() && affordable(n); }
   function onMain() {
+    if (booting) return;
     if (busy) { if (spinCtl) spinCtl.skip(); return; }
     if (freeSlots() <= 0) { openFullStock(); return; }
     if (canIssue(S.batch)) issue(S.batch);
@@ -1310,62 +1330,39 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function issue(n) {
     busy = true; audio(); closeSheet();
-    var cost = costOf(n), before = S.balance; S.balance -= cost;
-    logMoney('issue', -cost, n === 1 ? 'Выпуск номера' : 'Выпуск ×' + n);
-    var evt = eventNow(), made = [], reward = 0, ups = [];
-    for (var k = 0; k < n; k++) {
-      var luck = 1;
-      if (evt && (evt.left == null || evt.left > 0)) {
-        if (evt.kind === 'luck') luck = evt.v;
-        if (evt.left != null) evt.left--;
-      }
-      var r;
-      if (S.forceTier != null) {
-        var fd = E.digitsForTier(S.forceTier).join(''), fev = E.evaluate(fd);
-        r = { digits: fd, evaluation: fev, pity: E.nextPity(S.pity, fev.tier) }; S.forceTier = null;
-      } else r = E.issueNumber(S.pity, luck);
-      S.pity = r.pity;
-      var c = countryOf(S.country === 'any' ? ORDER[Math.floor(Math.random() * ORDER.length)] : S.country);
-      var ev = r.evaluation, net = c.nets[Math.floor(Math.random() * c.nets.length)][0];
-      var item = { id: uid(), c: c.key, d: r.digits, net: net, t: ev.tier, ts: Date.now() };
-      S.items.unshift(item); S.issued++;
-      if (!S.best || ev.points > S.best.p) S.best = { d: item.d, c: item.c, net: net, p: ev.points };
-      var lv = E.applyXp(S.level, S.xp, E.xpForIssue(ev.tier)); S.level = lv.level; S.xp = lv.xp;
-      lv.levelUps.forEach(function (u) { reward += u.reward; ups.push(u); logMoney('bonus', u.reward, 'Уровень ' + u.level); });
-      made.push({ item: item, ev: ev });
-    }
-    S.balance += reward;
-    var top = made.reduce(function (a, b) { return b.ev.points > a.ev.points ? b : a; });
-    S.last = top.item.id; save();
-
-    shown = before; var after = S.balance; S.balance = before - cost; renderBalance(true); S.balance = after;
+    var before = S.balance;
+    renderMain();
+    run('issue', { n: n, country: S.country }).then(function (r) { presentIssue(r, before, n); },
+      function (e) { busy = false; renderMain(); showErr(e); });
+  }
+  // Показ выпуска: табло крутится, а результат уже посчитан (сервером или здесь же).
+  function presentIssue(r, before, n) {
+    var made = r.made.map(function (it) { var x = findItem(it.id) || it; return { item: x, ev: evOf(x) }; });
+    var top = made.filter(function (m) { return m.item.id === r.top; })[0] || made[0];
+    shown = before; var after = S.balance; S.balance = before - r.cost; renderBalance(true); S.balance = after;
     hide(); setCard(top.item); setRun(0);
     document.querySelector('.r-spin .meta').textContent = n > 1 ? 'выпускаем ' + n + ' ' + plural(n, 'номер', 'номера', 'номеров') + '…' : SPIN_LINES[Math.floor(Math.random() * SPIN_LINES.length)];
     setResult('spin'); renderMain(); buzz('hard');
-
     spin(top.item.d, top.ev.tier, function () {
       current = top; batch = n > 1 ? { items: made } : null;
       show(top.item, top.ev, false);
       if (batch) fillBatch(true); else fillResult(top.ev, true);
       setTimeout(function () { setResult(batch ? 'batch' : 'main'); if (top.ev.tier >= 2) { chime(top.ev.tier); buzz('win'); } }, 240);
       renderPity(); renderLevel(); renderPills();
-      if (reward) { renderBalance(true); ups.forEach(function (u) { toast('Уровень ' + u.level + ' · +' + money(u.reward)); }); }
+      if (r.reward) { renderBalance(true); r.ups.forEach(function (u) { toast('Уровень ' + u.level + ' · +' + money(u.reward)); }); }
       busy = false; renderMain();
     });
     renderMain();
   }
 
-  // Продажа системе по списку id. Возвращает выручку.
-  function sellIds(ids) {
-    var set = {}, total = 0, sold = []; ids.forEach(function (id) { set[id] = true; });
-    S.items = S.items.filter(function (x) { if (set[x.id]) { total += E.quickSellPrice(E.evaluate(x.d)); sold.push(x); return false; } return true; });
-    if (!sold.length) return 0;
-    if (S.last && set[S.last]) S.last = null;
-    S.balance += total;
-    logMoney('sell', total, sold.length === 1 ? 'Продажа ' + fmtFull(sold[0]) : 'Продажа ' + sold.length + ' ' + plural(sold.length, 'номера', 'номеров', 'номеров'));
-    save(); renderBalance(true); buzz('win'); renderMain(); renderPills();
-    if (current && set[current.item.id]) { $('digits').classList.add('dim'); $('sim').dataset.tier = '0'; }
-    return total;
+  // Продажа системе по списку id; done(выручка) — после успеха.
+  function sellIds(ids, done) {
+    run('sell', { ids: ids }).then(function (r) {
+      var set = {}; r.ids.forEach(function (id) { set[id] = true; });
+      renderBalance(true); buzz('win'); renderMain(); renderPills();
+      if (current && set[current.item.id]) { $('digits').classList.add('dim'); $('sim').dataset.tier = '0'; }
+      if (done) done(r.total, r.n);
+    }, showErr);
   }
   function armed(btn, label, ms) {
     if (btn.classList.contains('confirm')) return true;
@@ -1378,8 +1375,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var b = $('sellBtn');
     if (!armed(b, 'Точно продать?')) return;
     clearTimeout(b._t);
-    var got = sellIds([current.item.id]);
-    $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null;
+    sellIds([current.item.id], function (got) { $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null; });
   }
   function sellBatch() {
     if (!batch || busy) return;
@@ -1387,17 +1383,17 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (!plan.list.length) return;
     if (!armed(b, 'За ' + sumLabel(plan.list) + '?')) return;
     clearTimeout(b._t);
-    var got = sellIds(plan.list.map(function (m) { return m.item.id; }));
-    toast('Продано ' + plan.list.length + ' · +' + money(got));
-    if (!batchAlive().length) { $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null; }
-    else fillBatch(false);
+    sellIds(plan.list.map(function (m) { return m.item.id; }), function (got, n) {
+      toast('Продано ' + n + ' · +' + money(got));
+      if (!batchAlive().length) { $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null; }
+      else fillBatch(false);
+    });
   }
   function fmtWait(ms) { var s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
   function sideJob() {
     var wait = S.jobAt + E.CONFIG.sideJob.cooldownMs - Date.now();
     if (wait > 0) return;
-    S.jobAt = Date.now(); S.balance += E.CONFIG.sideJob.amount; logMoney('bonus', E.CONFIG.sideJob.amount, 'Подработка'); save();
-    renderBalance(true); renderMain(); toast('Подработка · +' + money(E.CONFIG.sideJob.amount));
+    run('job').then(function (r) { renderBalance(true); renderMain(); toast('Подработка · +' + money(r.amount)); }, showErr);
   }
 
   // Одна главная кнопка: в Telegram — родная MainButton, в браузере — своя.
@@ -1407,7 +1403,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       var fit = SIZES.filter(canIssue); if (fit.length) S.batch = fit[fit.length - 1];
     }
     var text, enabled = true, alt = false, n = S.batch;
-    if (busy) { text = spinCtl ? 'Пропустить' : 'Выпускаем…'; enabled = !!spinCtl; alt = true; }
+    if (booting) { text = 'Загрузка…'; enabled = false; alt = true; }
+    else if (busy) { text = spinCtl ? 'Пропустить' : 'Выпускаем…'; enabled = !!spinCtl; alt = true; }
     else if (free <= 0) { text = 'Склад полон · освободить место'; alt = true; }
     else if (canIssue(n)) text = n === 1 ? 'Выпустить номер · ' + money(costOf(1)) : 'Выпустить ' + n + ' ' + plural(n, 'номер', 'номера', 'номеров') + ' · ' + money(costOf(n));
     else {
@@ -1458,10 +1455,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   function ic(color, path) { return '<span class="ic" style="background:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg></span>'; }
   var CHEV = '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
-  var VERSION = 'демо 0.9';
+  var VERSION = 'демо 0.10';
 
   function openMenu() {
-    if (busy) return;
+    if (busy || booting) return;
     var st = dailyStatus(), best = S.best ? fmtFull({ c: S.best.c, net: S.best.net, d: S.best.d }) : '—';
     var html = '<div class="group">';
     html += '<button class="row" type="button" id="dailyRow">' + ic('#F2A30F', '<path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1 0 1.5 2.5 1 5 1zM12 7c1.5-3 5-3.5 5-1 0 1.5-2.5 1-5 1z"/>') +
@@ -1489,7 +1486,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       html += '<div class="group-t">Предпросмотр вне Telegram</div><div class="group flat"><div class="row"><span class="t">Твой юзернейм<small>В Telegram он берётся автоматически</small></span>' +
         '<input class="inp mono" id="previewUser" style="max-width:150px;height:36px" placeholder="@username" value="' + esc(S.previewUser || '') + '" aria-label="Юзернейм для предпросмотра"></div></div>';
     }
-    html += '<p class="note">Демо: прогресс хранится только на этом устройстве.</p>';
+    html += '<p class="note">' + (SRV ? 'Прогресс хранится на сервере игры.' : 'Демо: прогресс хранится только на этом устройстве.') + '</p>';
     html += '<p class="ver">Финансовый ход · ' + VERSION + '</p>';
     openSheet(html);
   }
@@ -1723,9 +1720,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       return;
     }
     if (t.closest('#dailyRow')) {
-      var st = dailyStatus(); if (!st.available) return;
-      S.daily = { last: dayKey(0), streak: st.streak }; S.balance += st.reward; logMoney('bonus', st.reward, 'Награда дня'); save();
-      renderBalance(true); renderDot(); renderMain(); buzz('win'); closeSheet(); toast('Награда дня · +' + money(st.reward));
+      if (!dailyStatus().available) return;
+      run('daily').then(function (r) { renderBalance(true); renderDot(); renderMain(); buzz('win'); closeSheet(); toast('Награда дня · +' + money(r.reward)); }, showErr);
       return;
     }
     if ((el = t.closest('[data-theme-set]'))) {
@@ -1737,7 +1733,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if ((el = t.closest('#soundSw'))) { S.sound = !S.sound; save(); el.setAttribute('aria-checked', String(S.sound)); if (S.sound) tick(true); return; }
     if ((el = t.closest('#resetRow'))) {
       if (!el.dataset.armed) { el.dataset.armed = '1'; el.querySelector('.v').textContent = 'нажми ещё раз'; return; }
-      resetProgress(); closeSheet(); toast('Прогресс сброшен');
+      resetProgress(function () { closeSheet(); toast('Прогресс сброшен'); });
       return;
     }
     if (t.closest('#stockRow')) { closeSheet(); stockView.filter = 'all'; openPage('stock'); return; }
@@ -1769,38 +1765,27 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if ((el = t.closest('[data-edit-region]'))) { openRegionForm(el.getAttribute('data-edit-region')); return; }
     if ((el = t.closest('[data-del-op]'))) {
       var p = el.getAttribute('data-del-op').split('|');
-      S.custom.ops[p[0]] = (S.custom.ops[p[0]] || []).filter(function (n) { return n[0] !== p[1]; });
-      if (!S.custom.ops[p[0]].length) delete S.custom.ops[p[0]];
-      save(); rebuildCountries(); openEditor(); toast('Оператор удалён'); return;
+      worldDo({ kind: 'opDel', country: p[0], code: p[1] }, function () { openEditor(); toast('Оператор удалён'); }); return;
     }
     if ((el = t.closest('[data-del-rop]'))) {
-      var q = el.getAttribute('data-del-rop').split('|'), reg = S.custom.regions.filter(function (x) { return x.key === q[0]; })[0];
-      if (reg && reg.nets.length > 1) { reg.nets = reg.nets.filter(function (n) { return n[0] !== q[1]; }); save(); rebuildCountries(); }
-      openRegionForm(q[0]); return;
+      var q = el.getAttribute('data-del-rop').split('|');
+      worldDo({ kind: 'opDel', country: q[0], code: q[1] }, function () { openRegionForm(q[0]); }); return;
     }
     if (t.closest('#saveRegion')) {
       if (!preview()) { buzz('sel'); return; }
       var form = document.querySelector('[data-form="region"]'), key = form.getAttribute('data-key'), r = readRegion();
-      if (key) {
-        var ex = S.custom.regions.filter(function (x) { return x.key === key; })[0];
-        ex.name = r.name; ex.code = r.code; ex.groups = r.groups; ex.sep = r.sep; ex.badge = r.badge;
-      } else {
-        S.custom.regions.push({ key: 'x' + Date.now().toString(36), name: r.name, code: r.code, groups: r.groups, sep: r.sep, badge: r.badge, nets: [readOp(null).op] });
-      }
-      save(); rebuildCountries(); renderCountry(); if (!current) setCard(null); openEditor(); toast('Регион сохранён'); return;
+      worldDo({ kind: 'regionSave', region: { key: key || null, name: r.name, code: r.code, groups: r.groups, sep: r.sep, badge: r.badge }, op: key ? null : readOp(null).op },
+        function () { renderCountry(); if (!current) setCard(null); openEditor(); toast('Регион сохранён'); }); return;
     }
     if ((el = t.closest('#delRegion'))) {
       if (!el.dataset.armed) { el.dataset.armed = '1'; el.textContent = 'Точно удалить? Нажми ещё раз'; return; }
       var dk = document.querySelector('[data-form="region"]').getAttribute('data-key');
-      S.custom.regions = S.custom.regions.filter(function (x) { return x.key !== dk; });
-      save(); rebuildCountries(); renderCountry(); if (!current) setCard(null); openEditor(); toast('Регион удалён'); return;
+      worldDo({ kind: 'regionDel', key: dk }, function () { renderCountry(); if (!current) setCard(null); openEditor(); toast('Регион удалён'); }); return;
     }
     if (t.closest('#saveOp')) {
       if (!preview()) { buzz('sel'); return; }
-      var ck = val('oCountry'), o = readOp(ck).op, region = S.custom.regions.filter(function (x) { return x.key === ck; })[0];
-      if (region) region.nets.push(o);
-      else { S.custom.ops[ck] = (S.custom.ops[ck] || []).concat([o]); }
-      save(); rebuildCountries(); openEditor(); toast('Оператор добавлен'); return;
+      var ck = val('oCountry'), o = readOp(ck).op;
+      worldDo({ kind: 'opAdd', country: ck, op: o }, function () { openEditor(); toast('Оператор добавлен'); }); return;
     }
     if ((el = t.closest('[data-batch-i]'))) { var bi = batch.items[Number(el.getAttribute('data-batch-i'))]; closeSheet(); if (findItem(bi.item.id)) openPage('num', bi.item.id); else toast('Номер уже продан'); return; }
     if ((el = t.closest('#sheetSellCommon')) || (el = t.closest('#sheetSellAll'))) {
@@ -1808,10 +1793,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       var list = all ? alive : alive.filter(function (m) { return m.ev.tier === 0; });
       if (!list.length) { toast(all ? 'Всё уже продано' : 'Обычных не осталось'); return; }
       if (!armed(el, 'За ' + sumLabel(list) + '?')) return;
-      var got = sellIds(list.map(function (m) { return m.item.id; }));
-      toast('Продано ' + list.length + ' · +' + money(got));
-      if (!batchAlive().length) { $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null; closeSheet(); }
-      else { fillBatch(false); openBatch(); }
+      sellIds(list.map(function (m) { return m.item.id; }), function (got, n) {
+        toast('Продано ' + n + ' · +' + money(got));
+        if (!batchAlive().length) { $('soldSum').textContent = '+' + money(got); setResult('sold'); current = null; closeSheet(); }
+        else { fillBatch(false); openBatch(); }
+      });
       return;
     }
   });
@@ -2002,47 +1988,43 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var item = findItem(rr.id); if (!item || rr.pos === null || rr.busy) return;
     var q = E.rerollQuote(item.d, rr.pos);
     if (S.balance < q.fee) return;
-    S.balance -= q.fee; logMoney('reroll', -q.fee, 'Перекрутка ' + (rr.pos + 1) + '-й цифры · ' + fmtFull(item)); save(); renderBalance(true);
-    var res = E.rerollRoll(q), before = item.d, pos = rr.pos;
+    var pos = rr.pos, d = Number(item.d.charAt(pos)), el = document.querySelector('.nd[data-pos="' + pos + '"]');
     rr.busy = true; rr.last = null; rrRender(); audio();
-    var el = document.querySelector('.nd[data-pos="' + pos + '"]'), d = Number(before.charAt(pos));
-    var target = Number(res.digit), seq = [55, 55, 55, 55, 55, 55, 70, 90, 120, 160, 210];
-    var flips = 10 + ((((target - d - seq.length) % 10) + 10) % 10); // ≥ 1 полного круга
-    var plan = []; for (var k = 0; k < flips - seq.length; k++) plan.push(55); plan = plan.concat(seq);
-    var n = 0;
-    (function step() {
-      if (n >= plan.length) {
-        item.d = res.digits; item.t = E.evaluate(item.d).tier;
-        var p1 = E.quickSellPrice(E.evaluate(item.d)), diff = p1 - q.v0;
-        item.h = (item.h || []).concat([{ t: Date.now(), x: 'Перекрутка ' + (pos + 1) + '-й цифры: ' + before.charAt(pos) + ' → ' + res.digit + (res.outcome === 'same' ? '' : res.outcome === 'up' ? ' (дороже)' : ' (дешевле)') }]).slice(-20);
-        var ev1 = E.evaluate(item.d);
-        if (!S.best || ev1.points > S.best.p) S.best = { d: item.d, c: item.c, net: item.net, p: ev1.points };
-        save();
-        rr.busy = false;
-        rr.last = res.outcome === 'up' ? { kind: 'up', text: 'Выпала ' + res.digit + ' — номер подорожал' + (isSecret(ev1) ? '!' : ' на ' + money(diff) + '!') }
-          : res.outcome === 'down' ? { kind: 'down', text: 'Выпала ' + res.digit + ' — номер подешевел на ' + money(-diff) + '.' }
-          : { kind: 'none', text: 'Выпала ' + res.digit + ' — цена не изменилась.' };
-        if (res.outcome === 'up') { buzz('win'); chime(Math.max(2, ev1.tier)); } else buzz(res.outcome === 'down' ? 'hard' : 'soft');
-        tick(true);
-        replacePage('num', item.id);
-        return;
-      }
-      d = (d + 1) % 10;
-      if (el) flip(el, String(d), Math.min(plan[n], 200));
-      if (n % 3 === 0) flapTick();
-      setTimeout(step, plan[n++]);
-    })();
+    run('reroll', { id: item.id, pos: pos }).then(function (res) {
+      renderBalance(true);
+      var target = Number(res.digit), seq = [55, 55, 55, 55, 55, 55, 70, 90, 120, 160, 210];
+      var flips = 10 + ((((target - d - seq.length) % 10) + 10) % 10); // ≥ 1 полного круга
+      var plan = []; for (var k = 0; k < flips - seq.length; k++) plan.push(55); plan = plan.concat(seq);
+      var n = 0;
+      (function step() {
+        if (n >= plan.length) {
+          var x = findItem(res.id), ev1 = x ? evOf(x) : E.evaluate(res.digits);
+          rr.busy = false;
+          rr.last = res.outcome === 'up' ? { kind: 'up', text: 'Выпала ' + res.digit + ' — номер подорожал' + (isSecret(ev1) ? '!' : ' на ' + money(res.diff) + '!') }
+            : res.outcome === 'down' ? { kind: 'down', text: 'Выпала ' + res.digit + ' — номер подешевел на ' + money(-res.diff) + '.' }
+            : { kind: 'none', text: 'Выпала ' + res.digit + ' — цена не изменилась.' };
+          if (res.outcome === 'up') { buzz('win'); chime(Math.max(2, ev1.tier)); } else buzz(res.outcome === 'down' ? 'hard' : 'soft');
+          tick(true);
+          if (pages.length && pages[pages.length - 1].name === 'num') replacePage('num', res.id);
+          return;
+        }
+        d = (d + 1) % 10;
+        if (el) flip(el, String(d), Math.min(plan[n], 200));
+        if (n % 3 === 0) flapTick();
+        setTimeout(step, plan[n++]);
+      })();
+    }, function (e) { rr.busy = false; rrRender(); showErr(e); });
   }
 
   // ----- режим разработчика (только для юзернеймов из списка)
-  var ADMINS = ['zx23k']; // юзернеймы Telegram без @. В настоящей версии список хранится и проверяется на сервере.
+  var ADMINS = ['zx23k']; // владельцы в демо; на сервере права проверяет сервер (OWNER_USERNAMES)
   function username() {
     var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
     var name = u && u.username ? u.username : (!tg ? S.previewUser || '' : '');
     return String(name).toLowerCase().replace(/^@/, '').trim();
   }
   function adminList() { return ADMINS.concat(S.custom.admins || []); }
-  function isAdmin() { var u = username(); return !!u && adminList().indexOf(u) >= 0; }
+  function isAdmin() { if (SRV) return !!(SRV.me && SRV.me.admin); var u = username(); return !!u && adminList().indexOf(u) >= 0; }
   var TIER_NAMES = E.TIERS.map(function (t) { return t.name; });
   var EVENTS = [['luck', 2, 'Удача ×2'], ['luck', 3, 'Удача ×3'], ['luck', 5, 'Удача ×5'], ['sale', 0.1, 'Скидка 10%'], ['sale', 0.2, 'Скидка 20%'], ['sale', 0.3, 'Скидка 30%']];
   var EV_DUR = [['left', 10, '10 выпусков'], ['left', 50, '50 выпусков'], ['hours', 1, '1 час'], ['hours', 24, '24 часа']];
@@ -2079,39 +2061,52 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   };
   function actDef(k) { for (var g = 0; g < ACTS.length; g++) for (var i = 0; i < ACTS[g][1].length; i++) if (ACTS[g][1][i][0] === k) return ACTS[g][1][i]; return null; }
   function tgUserId() { var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user; return u && u.id ? String(u.id) : ''; }
-  function adminLog(a, x) {
-    S.adminLog.unshift({ t: Date.now(), who: username(), to: username(), a: a, x: x });
-    if (S.adminLog.length > 200) S.adminLog.length = 200;
-  }
   function avaHtml(name, cls) { return '<span class="ava' + (cls ? ' ' + cls : '') + '" style="background:linear-gradient(150deg,#8A7CFF,#5B47E0)">' + esc((name || '?').charAt(0).toUpperCase()) + '</span>'; }
-  function noticeNow() { var n = S.notice; if (!n) return null; if (n.until && Date.now() >= n.until) { S.notice = null; save(); return null; } return n; }
+  function noticeNow() { return G.noticeNow(S); }
+  // Сводка по игроку для панели — в демо это ты сам.
+  function selfSummary() {
+    var st = stockItems(), worth = 0, secret = 0;
+    st.forEach(function (m) { if (isSecret(m.ev)) secret++; else worth += E.marketPrice(m.ev); });
+    var me = SRV && SRV.me;
+    return { id: me ? me.id : Number(tgUserId()) || 0, username: me ? me.username : username(), name: me ? me.name : '', balance: S.balance, items: S.items.length,
+      worth: worth, secret: secret, level: S.level, issued: S.issued, upg: S.upg, self: true };
+  }
+  var devTarget = null, devFound = null;
+  function isSelf(p) { return !p || p.self || (SRV && SRV.me && p.id === SRV.me.id); }
 
   function devHtml() {
     if (!isAdmin()) return pageHead('Режим разработчика') + '<div class="empty"><b>Нет доступа</b><span>Этот раздел доступен только разработчикам.</span></div>';
-    var html = pageHead('Разработчик', '<span class="dev-badge">демо</span>');
+    var html = pageHead('Разработчик', '<span class="dev-badge">' + (SRV ? 'сервер' : 'демо') + '</span>');
     html += '<div class="tabs dev-tabs" role="tablist">' + DEV_TABS.map(function (t) {
       return '<button type="button" role="tab" data-devtab="' + t[0] + '" aria-selected="' + (devTab === t[0]) + '">' + t[1] + '</button>';
     }).join('') + '</div>';
     return html + (devTab === 'world' ? devWorld() : devTab === 'promo' ? devPromo() : devTab === 'access' ? devAccess() : devPlayers());
   }
+  function playerRow(p) {
+    var nm = p.username ? '@' + p.username : p.name || 'ID ' + p.id;
+    return '<button class="row" type="button" data-ptarget="' + p.id + '">' + avaHtml(p.username || p.name) + '<span class="t"><span class="mono">' + esc(nm) + '</span><small>ID ' + p.id + ' · ' + money(p.balance) + ' · ' + p.items + ' ' + plural(p.items, 'номер', 'номера', 'номеров') + '</small></span>' + CHEV + '</button>';
+  }
   function devPlayers() {
-    var st = stockItems(), worth = sumEst(st.filter(function (m) { return !isSecret(m.ev); })), id = tgUserId();
+    var p = devTarget && !isSelf(devTarget) ? devTarget : selfSummary(), self = isSelf(p);
+    var nm = p.username ? '@' + p.username : p.name || 'ID ' + p.id;
     var html = '<div class="psearch"><input class="search" id="pSearch" type="search" placeholder="@username или ID игрока" autocomplete="off"><button class="btn sm" type="button" id="pFind">Найти</button></div><p class="msg" id="pMsg"></p>';
-    html += '<div class="pcard"><div class="pc-head">' + avaHtml(username(), 'lg') + '<span class="t"><b>@' + esc(username()) + '</b><small>' + (id ? 'ID ' + esc(id) + ' · ' : '') + 'это ты · данные этого устройства</small></span><span class="pc-badge">админ</span></div>' +
-      '<div class="pc-stats">' + [['Баланс', money(S.balance)], ['Склад', S.items.length + ' / ' + CAP], ['Склад стоит', money(worth) + (hasSecret(st) ? '+' : '')],
-        ['Уровень', String(S.level)], ['Выпущено', nf.format(S.issued)], ['Апгрейды', S.upg.win + ' из ' + S.upg.n]].map(function (p) {
-        return '<div><span>' + p[0] + '</span><b class="mono">' + p[1] + '</b></div>';
+    if (devFound) html += devFound.length ? '<div class="group" style="margin-top:8px">' + devFound.map(playerRow).join('') + '</div>' : '';
+    html += '<div class="pcard"><div class="pc-head">' + avaHtml(p.username || p.name, 'lg') + '<span class="t"><b>' + esc(nm) + '</b><small>' + (p.id ? 'ID ' + esc(p.id) + ' · ' : '') + (self ? 'это ты' : 'выбранный игрок') + (SRV ? '' : ' · данные этого устройства') + '</small></span>' +
+      (self ? '<span class="pc-badge">админ</span>' : '<button class="link-btn" type="button" id="pSelf">Ко мне</button>') + '</div>' +
+      '<div class="pc-stats">' + [['Баланс', money(p.balance)], ['Склад', p.items + ' / ' + CAP], ['Склад стоит', money(p.worth) + (p.secret ? '+' : '')],
+        ['Уровень', String(p.level)], ['Выпущено', nf.format(p.issued)], ['Апгрейды', p.upg.win + ' из ' + p.upg.n]].map(function (x) {
+        return '<div><span>' + x[0] + '</span><b class="mono">' + x[1] + '</b></div>';
       }).join('') + '</div>' +
-      (S.forceTier != null ? '<div class="pc-note">Следующий выпуск: <span class="tname tc' + S.forceTier + '">' + TIER_NAMES[S.forceTier] + '</span></div>' : '') + '</div>';
+      (self && S.forceTier != null ? '<div class="pc-note">Следующий выпуск: <span class="tname tc' + S.forceTier + '">' + TIER_NAMES[S.forceTier] + '</span></div>' : '') + '</div>';
     ACTS.forEach(function (g) {
       html += '<div class="group-t">' + g[0] + '</div><div class="act-grid">' + g[1].map(function (a) {
         return '<button class="act" type="button" data-act="' + a[0] + '">' + ic(a[2], a[3]) + '<span>' + a[1] + '</span></button>';
       }).join('') + '</div>';
     });
-    html += '<div class="group-t">Появится с сервером</div><div class="act-grid">' + LATER.map(function (a) {
+    html += '<div class="group-t">Скоро</div><div class="act-grid">' + LATER.map(function (a) {
       return '<button class="act later" type="button" disabled>' + ic('#8A9096', a[1]) + '<span>' + a[0] + '</span></button>';
     }).join('') + '</div>';
-    html += '<p class="note">Сейчас действия применяются к тебе — данным этого устройства. С сервером поиск найдёт любого игрока, и те же кнопки будут работать для него; права проверит сервер.</p>';
+    html += '<p class="note">' + (SRV ? 'Действия применяются к выбранному игроку на сервере и попадают в журнал.' : 'Демо: действия применяются к тебе — данным этого устройства. В Telegram с сервером поиск найдёт любого игрока.') + '</p>';
     return html;
   }
   function devWorld() {
@@ -2134,7 +2129,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       return '<label><input type="radio" name="holiday" value="' + h[0] + '"' + ((S.holiday || 'none') === h[0] ? ' checked' : '') + '><span>' + h[1] + '</span></label>';
     }).join('') + '</div>';
     html += '<div class="group-t">Мир игры</div><div class="group"><button class="row" type="button" id="devRegions">' + ic('#6B57FF', '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/>') + '<span class="t">Регионы и операторы<small>Свои коды, операторы и логотипы</small></span>' + CHEV + '</button></div>';
-    html += '<p class="note">Демо: ивенты, объявления и оформление видны на этом устройстве. С сервером они включатся у всех игроков сразу.</p>';
+    html += '<p class="note">' + (SRV ? 'Ивенты, объявления и оформление сразу видят все игроки.' : 'Демо: ивенты, объявления и оформление видны на этом устройстве.') + '</p>';
     return html;
   }
   function promoReward(p) { return p.kind === 'money' ? money(p.v) : TIER_NAMES[p.v] + ' номер'; }
@@ -2155,20 +2150,22 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
         (p.until ? ' · ' + (dead ? 'истёк' : 'до ' + new Date(p.until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })) : '') + '</small></span>' +
         '<button class="link-btn" type="button" data-del-promo="' + esc(p.code) + '">Удалить</button></div>';
     }).join('') + '</div>';
-    html += '<p class="note">Демо: код вводится на этом устройстве. С сервером его сможет ввести любой игрок — каждый по одному разу.</p>';
+    html += '<p class="note">' + (SRV ? 'Код может ввести любой игрок — каждый по одному разу.' : 'Демо: код вводится на этом устройстве.') + '</p>';
     return html;
   }
   function devAccess() {
+    var owners = SRV ? SRV.owners : ADMINS, canEdit = !SRV || (SRV.me && SRV.me.owner);
     var html = '<div class="group-t">Разработчики</div><div class="group">' +
-      ADMINS.map(function (a) { return '<div class="row">' + avaHtml(a) + '<span class="t"><span class="mono">@' + esc(a) + '</span><small>владелец · задан в коде</small></span></div>'; }).join('') +
-      (S.custom.admins || []).map(function (a) { return '<div class="row">' + avaHtml(a) + '<span class="t"><span class="mono">@' + esc(a) + '</span><small>админ</small></span><button class="link-btn" type="button" data-del-admin="' + esc(a) + '">Убрать</button></div>'; }).join('') +
-      '</div><div class="inline" style="margin-top:8px"><input class="inp" id="gAdmin" placeholder="@username" aria-label="Новый разработчик"><button class="btn" type="button" id="addAdmin">Добавить</button></div>';
+      owners.map(function (a) { return '<div class="row">' + avaHtml(a) + '<span class="t"><span class="mono">@' + esc(a) + '</span><small>владелец</small></span></div>'; }).join('') +
+      (S.custom.admins || []).map(function (a) { return '<div class="row">' + avaHtml(a) + '<span class="t"><span class="mono">@' + esc(a) + '</span><small>админ</small></span>' + (canEdit ? '<button class="link-btn" type="button" data-del-admin="' + esc(a) + '">Убрать</button>' : '') + '</div>'; }).join('') + '</div>' +
+      (canEdit ? '<div class="inline" style="margin-top:8px"><input class="inp" id="gAdmin" placeholder="@username" aria-label="Новый разработчик"><button class="btn" type="button" id="addAdmin">Добавить</button></div>' : '<p class="note">Назначать разработчиков может только владелец.</p>');
     html += '<div class="group-t">Журнал действий</div>';
     if (!S.adminLog.length) html += '<div class="group"><div class="row"><span class="t" style="color:var(--hint)">Пока пусто. Здесь видно, кто, кому и что выдал.</span></div></div>';
     else html += '<div class="group flat">' + S.adminLog.slice(0, 80).map(function (e) {
-      return '<div class="row"><span class="t">' + esc(e.a) + '<small>' + esc(e.x) + '</small></span><span class="v">' + dayLabel(e.t).replace('Сегодня', '').trim() + (dayLabel(e.t) === 'Сегодня' ? '' : ', ') + hm(e.t) + '</span></div>';
+      var who = (e.who ? '@' + e.who : '') + (e.to && e.to !== '@' + e.who ? ' → ' + e.to : '');
+      return '<div class="row"><span class="t">' + esc(e.a) + '<small>' + esc((who ? who + ' · ' : '') + e.x) + '</small></span><span class="v">' + dayLabel(e.t).replace('Сегодня', '').trim() + (dayLabel(e.t) === 'Сегодня' ? '' : ', ') + hm(e.t) + '</span></div>';
     }).join('') + '</div>';
-    html += '<p class="note">С сервером: роли (владелец, админ, модератор), права проверяет сервер, журнал общий для всей команды.</p>';
+    html += '<p class="note">' + (SRV ? 'Права проверяет сервер, журнал общий для всей команды.' : 'Демо: список и журнал хранятся на этом устройстве.') + '</p>';
     return html;
   }
   function tierSeg(name, def, noCommon) {
@@ -2186,12 +2183,13 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function openAct(k) {
     var a = actDef(k); if (!a) return;
+    var p = devTarget && !isSelf(devTarget) ? devTarget : selfSummary(), self = isSelf(p);
     var danger = k === 'wipe' || k === 'reset' || k === 'take';
-    var html = '<h2>' + a[1] + '</h2><div class="act-who">' + avaHtml(username(), 'sm') + '@' + esc(username()) + '<small>· это ты</small></div>';
+    var html = '<h2>' + a[1] + '</h2><div class="act-who">' + avaHtml(p.username || p.name, 'sm') + esc(p.username ? '@' + p.username : p.name || 'ID ' + p.id) + '<small>· ' + (self ? 'это ты' : 'ID ' + p.id) + '</small></div>';
     if (k === 'give' || k === 'take' || k === 'set') {
-      html += '<input class="inp big mono" id="aAmt" inputmode="numeric" value="' + (k === 'set' ? S.balance : 10000) + '" aria-label="Сумма">' +
+      html += '<input class="inp big mono" id="aAmt" inputmode="numeric" value="' + (k === 'set' ? p.balance : 10000) + '" aria-label="Сумма">' +
         '<div class="qchips">' + [1000, 10000, 100000, 1000000].map(function (v) { return '<button type="button" class="fchip" data-q="' + v + '">' + nf.format(v) + '</button>'; }).join('') + '</div>' +
-        '<p class="mod-note">Сейчас на балансе ' + money(S.balance) + '</p>';
+        '<p class="mod-note">Сейчас на балансе ' + money(p.balance) + '</p>';
     } else if (k === 'num') {
       var ck = S.country === 'any' ? ORDER[0] : S.country;
       html += '<div class="form"><div class="inline two"><select class="inp" id="aC" aria-label="Страна">' + ORDER.map(function (key) { var c = countryOf(key); return '<option value="' + key + '"' + (key === ck ? ' selected' : '') + '>' + esc(c.name) + ' +' + esc(c.code) + '</option>'; }).join('') + '</select>' +
@@ -2199,60 +2197,38 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
         '<input class="inp big mono" id="aD" inputmode="numeric" maxlength="7" placeholder="7777777" aria-label="Цифры номера"><p class="mod-note" id="aPrev">Введите ровно 7 цифр.</p></div>';
     } else if (k === 'rand') {
       html += '<div class="sub-t">Редкость</div>' + tierSeg('aTier', 3) + '<div class="sub-t">Сколько</div><div class="seg">' + [1, 5, 10, 50].map(function (n, i) { return '<label><input type="radio" name="aCnt" value="' + n + '"' + (i === 0 ? ' checked' : '') + '><span>' + n + '</span></label>'; }).join('') + '</div>' +
-        '<p class="mod-note">Страна — как в выпуске. Свободно на складе: ' + freeSlots() + '.</p>';
+        '<p class="mod-note">Страна — как в твоём выпуске. Свободно на складе: ' + (CAP - p.items) + '.</p>';
     } else if (k === 'force') {
-      html += tierSeg('aTier', S.forceTier != null ? S.forceTier : 4) + '<p class="mod-note">Сработает на ближайшем выпуске один раз.' + (S.forceTier != null ? ' Сейчас: ' + TIER_NAMES[S.forceTier] + '.' : '') + '</p>';
+      html += tierSeg('aTier', 4) + '<p class="mod-note">Сработает на ближайшем выпуске игрока один раз.</p>';
     } else if (k === 'level') {
-      html += '<input class="inp big mono" id="aLvl" inputmode="numeric" value="' + S.level + '" aria-label="Уровень"><p class="mod-note">Опыт внутри уровня начнётся с нуля.</p>';
+      html += '<input class="inp big mono" id="aLvl" inputmode="numeric" value="' + p.level + '" aria-label="Уровень"><p class="mod-note">Опыт внутри уровня начнётся с нуля.</p>';
     } else html += '<p class="act-info">' + ACT_INFO[k] + '</p>';
     html += '<p class="msg" id="actMsg"></p><button class="btn ' + (danger ? 'dz' : 'pri') + ' wide" type="button" data-apply="' + k + '" style="margin-top:6px">' +
       ({ give: 'Выдать', take: 'Забрать', set: 'Задать', num: 'Выдать номер', rand: 'Выдать', force: 'Назначить', level: 'Задать уровень', wipe: 'Очистить склад', reset: 'Сбросить игрока' }[k] || 'Применить') + '</button>';
     openSheet(html);
   }
-  function newItem(c, d, net, note) {
-    var ev = E.evaluate(d), it = { id: uid(), c: c.key, d: d, net: net || c.nets[Math.floor(Math.random() * c.nets.length)][0], t: ev.tier, ts: Date.now(), h: [{ t: Date.now(), x: note }] };
-    S.items.unshift(it);
-    if (!S.best || ev.points > S.best.p) S.best = { d: d, c: c.key, net: it.net, p: ev.points };
-    return it;
-  }
-  function issueCountry() { return countryOf(S.country === 'any' ? ORDER[Math.floor(Math.random() * ORDER.length)] : S.country); }
   function actErr(t) { $('actMsg').innerHTML = '<span class="err">' + esc(t) + '</span>'; buzz('hard'); }
   function applyAct(k, btn) {
-    var a = actDef(k), msg;
-    if (k === 'give' || k === 'take' || k === 'set') {
-      var amt = Math.max(0, Math.min(1e10, parseInt(val('aAmt'), 10) || 0));
-      if (k === 'give') { if (!amt) return actErr('Укажите сумму.'); S.balance += amt; logMoney('dev', amt, 'Выдано разработчиком'); msg = 'Выдано +' + money(amt); }
-      else if (k === 'take') { var tk = Math.min(amt, S.balance); if (!tk) return actErr('Нечего забирать.'); S.balance -= tk; logMoney('dev', -tk, 'Списано разработчиком'); msg = 'Списано −' + money(tk); }
-      else { var diff = amt - S.balance; S.balance = amt; logMoney('dev', diff, 'Баланс задан разработчиком'); msg = 'Баланс: ' + money(amt); }
-    } else if (k === 'num') {
-      var d = val('aD');
-      if (!/^\d{7}$/.test(d)) return actErr('Нужно ровно 7 цифр.');
-      if (freeSlots() <= 0) return actErr('Склад полон: ' + CAP + ' номеров.');
-      var it = newItem(countryOf(val('aC')), d, val('aOp'), 'Выдан разработчиком');
-      msg = 'Выдан ' + fmtFull(it);
-    } else if (k === 'rand') {
-      var t = Number(radio('aTier')), n = Math.min(Number(radio('aCnt')) || 1, freeSlots());
-      if (n <= 0) return actErr('Склад полон: ' + CAP + ' номеров.');
-      for (var i = 0; i < n; i++) newItem(issueCountry(), E.digitsForTier(t).join(''), null, 'Выдан разработчиком');
-      msg = 'Выдано ' + n + ' ' + plural(n, 'номер', 'номера', 'номеров') + ' · ' + TIER_NAMES[t];
-    } else if (k === 'force') { S.forceTier = Number(radio('aTier')); msg = 'Следующий выпуск: ' + TIER_NAMES[S.forceTier]; }
-    else if (k === 'level') { var lv = Math.max(1, Math.min(999, parseInt(val('aLvl'), 10) || 1)); S.level = lv; S.xp = 0; msg = 'Уровень ' + lv; }
-    else if (k === 'pity') { S.pity = {}; msg = 'Гаранты сброшены'; }
-    else if (k === 'daily') { S.daily = { last: dayKey(-1), streak: Math.max(0, (S.daily.streak || 1) - 1) }; msg = 'Награду дня можно забрать снова'; }
-    else if (k === 'job') { S.jobAt = 0; msg = 'Подработка доступна'; }
-    else if (k === 'unlock') { var cnt = 0; S.items.forEach(function (x) { if (x.lock) { delete x.lock; cnt++; } }); msg = 'Откреплено: ' + cnt; }
-    else if (k === 'wipe') { if (!armed(btn, 'Точно удалить ' + S.items.length + '?')) return; msg = 'Склад очищен: ' + S.items.length; S.items = []; S.last = null; }
-    else if (k === 'reset') { if (!armed(btn, 'Точно сбросить?')) return; adminLog(a[1], '@' + username()); resetProgress(); closeSheet(); replacePage('dev'); toast('Прогресс игрока сброшен'); return; }
-    adminLog(a[1], msg); save(); closeSheet();
-    renderBalance(true); renderLevel(); renderPity(); renderDot(); renderMain(); renderPills();
-    replacePage('dev'); buzz('win'); toast(msg);
+    var p = devTarget && !isSelf(devTarget) ? devTarget : selfSummary(), self = isSelf(p);
+    var args = { kind: k, target: p.id, country: S.country };
+    if (k === 'give' || k === 'take' || k === 'set') args.amt = parseInt(val('aAmt'), 10) || 0;
+    else if (k === 'num') { args.d = val('aD'); args.c = val('aC'); args.net = val('aOp'); }
+    else if (k === 'rand') { args.tier = Number(radio('aTier')); args.count = Number(radio('aCnt')) || 1; }
+    else if (k === 'force') args.tier = Number(radio('aTier'));
+    else if (k === 'level') args.level = parseInt(val('aLvl'), 10) || 1;
+    else if (k === 'wipe' && !armed(btn, 'Точно удалить ' + p.items + '?')) return;
+    else if (k === 'reset' && !armed(btn, 'Точно сбросить?')) return;
+    btn.disabled = true;
+    run('admin.act', args).then(function (r) {
+      devTarget = self ? null : r.target;
+      closeSheet();
+      if (self) { if (k === 'reset' || k === 'wipe') { current = null; batch = null; boot(); } renderBalance(true); renderLevel(); renderPity(); renderDot(); renderMain(); renderPills(); }
+      replacePage('dev'); buzz('win'); toast(r.msg);
+    }, function (e) { btn.disabled = false; if (e && e.game) actErr(e.message); else showErr(e); });
   }
-  // общий сброс прогресса: настройки, промокоды, ивенты и журнал остаются
-  function resetProgress() {
-    var keep = {};
-    ['sound', 'fast', 'theme', 'custom', 'previewUser', 'favs', 'holiday', 'event', 'stockView', 'promos', 'adminLog', 'notice', 'buyersNow'].forEach(function (k) { keep[k] = S[k]; });
-    S = fresh(); Object.keys(keep).forEach(function (k) { if (keep[k] !== undefined) S[k] = keep[k]; }); save();
-    upg.ids = []; upg.last = null; current = null; batch = null; boot();
+  // Начать заново (меню): всё по игроку с нуля, настройки остаются.
+  function resetProgress(done) {
+    run('reset').then(function () { upg.ids = []; upg.last = null; current = null; batch = null; boot(); if (done) done(); }, showErr);
   }
   // промокоды: игрок вводит код в меню
   function openPromo() {
@@ -2261,28 +2237,23 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<p class="note">Промокоды раздают в канале игры и на ивентах. Каждый код можно ввести один раз.</p>');
   }
   function redeem() {
-    var code = val('promoIn').toUpperCase().replace(/\s/g, ''), p = S.promos.filter(function (x) { return x.code === code; })[0], err = '';
-    if (!code) err = 'Введи код.';
-    else if (!p) err = 'Такого кода нет.';
-    else if (S.redeemed.indexOf(code) >= 0) err = 'Этот код уже активирован.';
-    else if (p.until && Date.now() >= p.until) err = 'Срок кода истёк.';
-    else if (p.limit && p.used >= p.limit) err = 'Код уже ввели максимальное число раз.';
-    else if (p.kind === 'tier' && freeSlots() <= 0) err = 'Склад полон — освободи место.';
-    if (err) { $('promoMsg').innerHTML = '<span class="err">' + err + '</span>'; buzz('hard'); return; }
-    p.used++; S.redeemed.push(code);
-    var got;
-    if (p.kind === 'money') { S.balance += p.v; logMoney('bonus', p.v, 'Промокод ' + code); got = '+' + money(p.v); }
-    else { var it = newItem(issueCountry(), E.digitsForTier(p.v).join(''), null, 'Промокод ' + code); logMoney('bonus', 0, 'Промокод ' + code + ' → номер ' + fmtFull(it)); got = 'номер на складе'; }
-    save(); closeSheet(); renderBalance(true); renderMain(); renderPills(); buzz('win'); toast('Промокод активирован · ' + got);
+    var code = val('promoIn').toUpperCase().replace(/\s/g, '');
+    if (!code) { $('promoMsg').innerHTML = '<span class="err">Введи код.</span>'; buzz('hard'); return; }
+    run('redeem', { code: code, country: S.country }).then(function (r) {
+      closeSheet(); renderBalance(true); renderMain(); renderPills(); buzz('win');
+      toast('Промокод активирован · ' + (r.kind === 'money' ? '+' + money(r.amount) : 'номер на складе'));
+    }, function (e) { if (e && e.game) { $('promoMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; buzz('hard'); } else showErr(e); });
   }
   function genCode() { var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = 'FH'; for (var i = 0; i < 6; i++) s += A.charAt(Math.floor(Math.random() * A.length)); return s; }
   function createPromo() {
-    var code = val('pCode').toUpperCase().replace(/\s/g, ''), kind = radio('pKind'), msg = $('pCreateMsg');
-    var v = kind === 'money' ? Math.min(1e9, parseInt(val('pAmt'), 10) || 0) : Number(radio('pTier'));
-    var err = !/^[A-Z0-9]{4,16}$/.test(code) ? 'Код: 4–16 латинских букв и цифр.' : S.promos.some(function (p) { return p.code === code; }) ? 'Такой код уже есть.' : kind === 'money' && v <= 0 ? 'Укажите сумму.' : '';
-    if (err) { msg.innerHTML = '<span class="err">' + err + '</span>'; buzz('hard'); return; }
-    var days = Number(radio('pTtl')), p = { code: code, kind: kind, v: v, limit: Number(radio('pLimit')), used: 0, until: days ? Date.now() + days * 864e5 : 0, t: Date.now() };
-    S.promos.unshift(p); adminLog('Промокод создан', code + ' · ' + promoReward(p)); save(); replacePage('dev'); buzz('win'); toast('Промокод ' + code + ' создан');
+    var kind = radio('pKind'), args = { kind: 'promoCreate', code: val('pCode'), promoKind: kind, v: kind === 'money' ? parseInt(val('pAmt'), 10) || 0 : Number(radio('pTier')),
+      limit: Number(radio('pLimit')), days: Number(radio('pTtl')) };
+    run('admin.world', args).then(function (r) { replacePage('dev'); buzz('win'); toast('Промокод ' + r.msg + ' создан'); },
+      function (e) { if (e && e.game) { $('pCreateMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; buzz('hard'); } else showErr(e); });
+  }
+  // Настройка мира: ивент, объявление, скупщики, оформление, промокоды, админы, регионы.
+  function worldDo(args, after) {
+    return run('admin.world', args).then(function (r) { renderPills(); renderMain(); if (after) after(r); }, showErr);
   }
 
   // ----- история: сколько потрачено, на что и сколько получено
@@ -2329,61 +2300,14 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
 
   // ----- скупщики: трое в день (в 00:00, 08:00 и 16:00), платят больше цены, но берут только то, что ищут
-  var BUYER_NAMES = ['Аркадий Коллекционер', 'Барон Нулей', 'Тётя Зина', 'Сеня Перекуп', 'Мистер Лаки', 'Дядя Гоша', 'Нумеролог Ян', 'Профессор Цифра', 'Лёха с рынка', 'Мадам Семёрка'];
-  function seeded(str) {
-    for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
-    var a = h >>> 0;
-    return function () { a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  }
-  function maxRun(d) { var best = 1, cur = 1; for (var i = 1; i < d.length; i++) { cur = d[i] === d[i - 1] ? cur + 1 : 1; if (cur > best) best = cur; } return best; }
-  function hasPat(ev, ids) { return ev.patterns.some(function (p) { return ids.indexOf(p.id) >= 0; }); }
-  function pickOf(r, arr) { return arr[Math.floor(r() * arr.length)]; }
-  function mainKeys() { return COUNTRY_LIST.filter(function (c) { return c[3] === 'main'; }).map(function (c) { return c[0]; }); }
-  function tierWant(t, mult, qty) { return { tier: t, mult: mult, qty: qty, test: function (x, ev) { return ev.tier === t; } }; }
-  // [вес, заявка]. Заявка: text и/или страна c, или редкость tier; mult — во сколько раз дороже цены; qty — сколько номеров возьмёт.
-  var WANTS = [
-    [3, function (r) { var c = pickOf(r, mainKeys()); return { text: 'Две одинаковые цифры подряд', c: c, mult: 1.2, qty: 3, test: function (x) { return x.c === c && maxRun(x.d) >= 2; } }; }],
-    [2, function (r) { var c = pickOf(r, mainKeys()); return { text: 'Любой номер', c: c, mult: 1.15, qty: 3, test: function (x) { return x.c === c; } }; }],
-    [2, function () { return { text: 'Три одинаковые цифры подряд', mult: 1.3, qty: 2, test: function (x) { return maxRun(x.d) >= 3; } }; }],
-    [2, function () { return { text: 'Лесенка из трёх цифр, например 345', mult: 1.3, qty: 2, test: function (x, ev) { return hasPat(ev, ['ladder']); } }; }],
-    [2, function () { return { text: 'Зеркальный кусок, например 12321', mult: 1.35, qty: 2, test: function (x, ev) { return hasPat(ev, ['mirror', 'smallMirror']); } }; }],
-    [2, function () { return { text: 'Номер заканчивается на 00', mult: 1.25, qty: 2, test: function (x) { return x.d.slice(-2) === '00'; } }; }],
-    [2, function () { return { text: 'Минимум две семёрки', mult: 1.2, qty: 3, test: function (x) { return x.d.split('7').length > 2; } }; }],
-    [1.5, function () { return { text: 'Все цифры разные', mult: 1.2, qty: 2, test: function (x, ev) { return hasPat(ev, ['allDistinct']); } }; }],
-    [3, function () { return tierWant(1, 1.3, 2); }],
-    [2, function () { return tierWant(2, 1.4, 1); }],
-    [1.2, function () { return tierWant(3, 1.6, 1); }],
-    [0.5, function () { return tierWant(4, 2, 1); }]
-  ];
-  var buyersCache = null;
-  function buyersToday() {
-    var day = dayKey(0);
-    if (!S.buyers || S.buyers.day !== day) { S.buyers = { day: day, sold: {} }; save(); }
-    var seed = S.buyers.seed || 0;
-    if (buyersCache && buyersCache.day === day && buyersCache.seed === seed) return buyersCache.list;
-    var r = seeded('fh-buyers|' + day + (seed ? '|' + seed : '')), used = {}, names = {}, list = [];
-    var total = WANTS.reduce(function (s, w) { return s + w[0]; }, 0);
-    for (var i = 0; i < 3; i++) {
-      var idx;
-      do { var x = r() * total; idx = 0; while (idx < WANTS.length - 1 && x >= WANTS[idx][0]) { x -= WANTS[idx][0]; idx++; } } while (used[idx]);
-      used[idx] = true;
-      var b = WANTS[idx][1](r), ni;
-      do { ni = Math.floor(r() * BUYER_NAMES.length); } while (names[ni]);
-      names[ni] = true;
-      b.i = i; b.hour = i * 8; b.name = BUYER_NAMES[ni]; b.color = SWATCHES[(ni * 3) % SWATCHES.length];
-      list.push(b);
-    }
-    buyersCache = { day: day, seed: seed, list: list };
-    return list;
-  }
-  function buyerState(b) {
-    if (!S.buyersNow && new Date().getHours() < b.hour) return 'wait';
-    return (S.buyers.sold[b.i] || 0) >= b.qty ? 'done' : 'open';
-  }
+  function buyersToday() { return G.buyersToday(S, S); }
+  function buyerState(b) { return G.buyerState(b, S, S); }
   function buyerMatches(b) {
-    return stockItems().filter(function (m) { return !m.item.lock && !isSecret(m.ev) && b.test(m.item, m.ev); });
+    return stockItems().filter(function (m) { return !m.item.lock && !isSecret(m.ev) && G.buyerAccepts(b, m.item, m.ev); });
   }
-  function buyerPrice(b, ev) { return Math.round(E.marketPrice(ev) * b.mult / 10) * 10; }
+  function buyerPrice(b, ev) { return G.buyerPrice(b, ev); }
+  function buyerColor(b) { return SWATCHES[(b.nameIdx * 3) % SWATCHES.length]; }
+  function soldTo(b) { return (S.buyers && S.buyers.sold[b.i]) || 0; }
   function fmtMult(m) { return '×' + String(m).replace('.', ','); }
   function hh(h) { return String(h).padStart(2, '0') + ':00'; }
   function wantHtml(b) {
@@ -2400,10 +2324,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var bs = buyersToday(), html = pageHead('Скупщики');
     html += '<p class="note" style="margin:0 4px 12px">Каждый день приходят трое: в 00:00, 08:00 и 16:00. Платят больше цены номера, но берут только то, что ищут.</p><div class="group">';
     bs.forEach(function (b) {
-      var st = buyerState(b), n = st === 'open' ? buyerMatches(b).length : 0, left = b.qty - (S.buyers.sold[b.i] || 0);
+      var st = buyerState(b), n = st === 'open' ? buyerMatches(b).length : 0, left = b.qty - soldTo(b);
       var sub = st === 'wait' ? 'придёт в ' + hh(b.hour) : st === 'done' ? 'купил всё и ушёл'
         : (n ? 'подходят: ' + n : 'подходящих пока нет') + ' · возьмёт ' + left;
-      html += '<button class="row buyer' + (st !== 'open' ? ' off' : '') + '" type="button" data-buyer="' + b.i + '"><span class="ava" style="background:' + b.color + '">' + esc(b.name.charAt(0)) + '</span>' +
+      html += '<button class="row buyer' + (st !== 'open' ? ' off' : '') + '" type="button" data-buyer="' + b.i + '"><span class="ava" style="background:' + buyerColor(b) + '">' + esc(b.name.charAt(0)) + '</span>' +
         '<span class="t"><b>' + esc(b.name) + '</b><span class="want">' + wantHtml(b) + '</span><small' + (st === 'open' && n ? ' class="plus"' : '') + '>' + sub + '</small></span><span class="bmult mono">' + fmtMult(b.mult) + '</span></button>';
     });
     html += '</div><p class="note">Новые скупщики — завтра в 00:00. Закреплённые номера и Secret скупщикам не предлагаются. Демо: покупает игра, а не живой игрок.</p>';
@@ -2411,8 +2335,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function openBuyer(i) {
     var b = buyersToday()[i]; if (!b) return;
-    var st = buyerState(b), left = b.qty - (S.buyers.sold[b.i] || 0);
-    var html = '<div class="bhead"><span class="ava lg" style="background:' + b.color + '">' + esc(b.name.charAt(0)) + '</span><span class="t"><b>' + esc(b.name) + '</b><small>' + wantHtml(b) + '</small></span><span class="bmult mono">' + fmtMult(b.mult) + '</span></div>';
+    var st = buyerState(b), left = b.qty - soldTo(b);
+    var html = '<div class="bhead"><span class="ava lg" style="background:' + buyerColor(b) + '">' + esc(b.name.charAt(0)) + '</span><span class="t"><b>' + esc(b.name) + '</b><small>' + wantHtml(b) + '</small></span><span class="bmult mono">' + fmtMult(b.mult) + '</span></div>';
     if (st === 'wait') html += '<div class="empty" style="padding:24px 16px"><b>Придёт в ' + hh(b.hour) + '</b><span>Пока можно подготовить номера.</span></div>';
     else if (st === 'done') html += '<div class="empty" style="padding:24px 16px"><b>Купил всё и ушёл</b><span>Новые скупщики — завтра.</span></div>';
     else {
@@ -2427,19 +2351,17 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     openSheet(html);
   }
   function buyerSell(el) {
-    var p = el.getAttribute('data-bsell').split('|'), b = buyersToday()[Number(p[0])], x = findItem(p[1]);
-    if (!b || !x || x.lock || buyerState(b) !== 'open') return;
-    var ev = evOf(x); if (isSecret(ev) || !b.test(x, ev)) return;
+    var p = el.getAttribute('data-bsell').split('|'), bi = Number(p[0]), x = findItem(p[1]);
+    if (!x) return;
     if (!armed(el, 'Продать?')) return;
-    var pay = buyerPrice(b, ev);
-    S.items = S.items.filter(function (y) { return y.id !== x.id; }); if (S.last === x.id) S.last = null;
-    S.balance += pay; S.buyers.sold[b.i] = (S.buyers.sold[b.i] || 0) + 1;
-    logMoney('buyer', pay, b.name + ': ' + fmtFull(x));
-    save(); renderBalance(true); buzz('win'); renderMain(); renderPills();
-    if (current && current.item.id === x.id) { $('digits').classList.add('dim'); $('sim').dataset.tier = '0'; }
-    toast('Продано скупщику · +' + money(pay));
-    if (pages.length && pages[pages.length - 1].name === 'buyers') replacePage('buyers');
-    openBuyer(b.i);
+    el.disabled = true;
+    run('buyerSell', { b: bi, id: x.id }).then(function (r) {
+      buzz('win'); renderBalance(true); renderMain(); renderPills();
+      if (current && current.item.id === r.id) { $('digits').classList.add('dim'); $('sim').dataset.tier = '0'; }
+      toast('Продано скупщику · +' + money(r.pay));
+      if (pages.length && pages[pages.length - 1].name === 'buyers') replacePage('buyers');
+      openBuyer(bi);
+    }, function (e) { el.disabled = false; showErr(e); });
   }
 
   // ----- апгрейдер: ставишь до 10 номеров и выбираешь множитель; шанс = 90% / множитель
@@ -2558,51 +2480,32 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function upgGo() {
     var stake = upgStake(); if (!stake.length || upg.busy) return;
-    var m = upg.m, val = sumEst(stake), target = Math.round(val * m / 10) * 10, r = Math.random(), win = r < upgChance(m);
-    var set = {}; stake.forEach(function (s) { set[s.item.id] = true; });
-    S.items = S.items.filter(function (x) { return !set[x.id]; });
-    if (S.last && set[S.last]) S.last = null;
-    var res = { win: win, val: val, m: m }, what = 'Апгрейд ' + fmtMult(m) + ': ' + stake.length + ' ' + plural(stake.length, 'номер', 'номера', 'номеров'), newTier = 0;
-    S.upg.n++;
-    if (win) {
-      S.upg.win++;
-      var d = E.findNumberNear(target);
-      if (d) {
-        // новый номер — из страны самого дорогого номера ставки
-        var src = stake.reduce(function (a, b) { return E.marketPrice(b.ev) > E.marketPrice(a.ev) ? b : a; }).item, c = countryOf(src.c), ev = E.evaluate(d);
-        var item = { id: uid(), c: c.key, d: d, net: c.nets[Math.floor(Math.random() * c.nets.length)][0], t: ev.tier, ts: Date.now(), h: [{ t: Date.now(), x: 'Получен в апгрейдере ' + fmtMult(m) }] };
-        S.items.unshift(item); res.item = item.id; newTier = ev.tier;
-        if (!S.best || ev.points > S.best.p) S.best = { d: d, c: c.key, net: item.net, p: ev.points };
-        logMoney('upgrade', 0, what + ' → номер', { v: E.marketPrice(ev) - val });
-      } else {
-        res.cash = target; S.balance += target;
-        logMoney('upgrade', target, what + ' → деньгами');
-      }
-    } else logMoney('upgrade', 0, what + ' → мимо', { v: -val });
-    save();
-    upg.ids = []; upg.busy = true; upg.last = null;
+    upg.busy = true; upg.last = null;
     var go = $('upgGo'); go.disabled = true; go.textContent = 'Крутим…';
     document.querySelectorAll('[data-mult], [data-unstake], #stakeAdd, #upgHelp').forEach(function (b) { b.disabled = true; });
     $('dialWrap').classList.add('spinning');
-    // бегунок делает несколько оборотов и встаёт на угол r·360°; цветная дуга — от 0 до шанс·360°
-    var needle = $('needle'), trail = $('upgTrailEl'), quick = S.fast || reduced, from = upg.angle % 360, to = 360 * (quick ? 1 : 6) + r * 360;
-    var dur = quick ? 400 : 4200, t0 = performance.now(), lastTick = Math.floor(from / 12), prevA = from, prevT = t0;
     audio(); buzz('hard');
-    (function frame(now) {
-      var k = Math.min(1, (now - t0) / dur), a = from + (to - from) * (1 - Math.pow(1 - k, 3.6));
-      needle.setAttribute('transform', 'rotate(' + a.toFixed(2) + ' 120 120)');
-      var speed = (a - prevA) / Math.max(1, now - prevT); prevA = a; prevT = now;
-      trail.style.opacity = Math.min(1, speed * 1.4).toFixed(2);
-      var tk = Math.floor(a / 12); if (tk !== lastTick) { lastTick = tk; flapTick(); if (k > 0.8) buzz('sel'); }
-      if (k < 1) { requestAnimationFrame(frame); return; }
-      upg.busy = false; upg.angle = to % 360; upg.last = res;
-      if (win) { chime(4); buzz('win'); } else { tick(true); buzz('hard'); }
-      renderBalance(true); renderMain(); renderPills();
-      if (pages.length && pages[pages.length - 1].name === 'upg') {
-        replacePage('upg');
-        if (win) burst($('dialWrap'), newTier || 4);
-      }
-    })(t0);
+    run('upgrade', { ids: upg.ids.slice(), m: upg.m }).then(function (res) {
+      upg.ids = [];
+      // бегунок делает несколько оборотов и встаёт на угол r·360°; цветная дуга — от 0 до шанс·360°
+      var needle = $('needle'), trail = $('upgTrailEl'), quick = S.fast || reduced, from = upg.angle % 360, to = 360 * (quick ? 1 : 6) + res.r * 360;
+      var dur = quick ? 400 : 4200, t0 = performance.now(), lastTick = Math.floor(from / 12), prevA = from, prevT = t0;
+      (function frame(now) {
+        var k = Math.min(1, (now - t0) / dur), a = from + (to - from) * (1 - Math.pow(1 - k, 3.6));
+        if (needle) needle.setAttribute('transform', 'rotate(' + a.toFixed(2) + ' 120 120)');
+        var speed = (a - prevA) / Math.max(1, now - prevT); prevA = a; prevT = now;
+        if (trail) trail.style.opacity = Math.min(1, speed * 1.4).toFixed(2);
+        var tk = Math.floor(a / 12); if (tk !== lastTick) { lastTick = tk; flapTick(); if (k > 0.8) buzz('sel'); }
+        if (k < 1) { requestAnimationFrame(frame); return; }
+        upg.busy = false; upg.angle = to % 360; upg.last = res;
+        if (res.win) { chime(4); buzz('win'); } else { tick(true); buzz('hard'); }
+        renderBalance(true); renderMain(); renderPills();
+        if (pages.length && pages[pages.length - 1].name === 'upg') {
+          replacePage('upg');
+          if (res.win) burst($('dialWrap'), res.tier || 4);
+        }
+      })(performance.now());
+    }, function (e) { upg.busy = false; replacePage('upg'); showErr(e); });
   }
 
   // ----- плашки на главном: ивент и скупщики
@@ -2788,19 +2691,18 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (!ids.length) return;
       var plist = ids.map(function (id) { var x = findItem(id); return { item: x, ev: evOf(x) }; });
       if (!armed(el, 'Точно? +' + sumLabel(plist))) return;
-      var gotP = sellIds(ids); stockView.picked = {}; stockView.select = false;
-      toast('Продано ' + ids.length + ' · +' + money(gotP)); replacePage('stock'); return;
+      sellIds(ids, function (gotP, n) { stockView.picked = {}; stockView.select = false; toast('Продано ' + n + ' · +' + money(gotP)); replacePage('stock'); }); return;
     }
     if ((el = t.closest('[data-pos]'))) { if (rr.busy) return; var np = Number(el.getAttribute('data-pos')); rr.pos = rr.pos === np ? null : np; rr.last = null; buzz('sel'); var y2 = $('page').scrollTop; replacePage('num', rr.id); $('page').scrollTop = y2; return; }
     if (t.closest('#rrTry')) { rrTry(); return; }
     if ((el = t.closest('#sellCommons'))) {
       var commons = S.items.filter(function (x) { return !x.lock && evOf(x).tier === 0; }).map(function (x) { return { item: x, ev: evOf(x) }; });
       if (!armed(el, 'Точно? +' + money(sumEst(commons)))) return;
-      var got = sellIds(commons.map(function (m) { return m.item.id; })); toast('Продано ' + commons.length + ' · +' + money(got)); replacePage('stock'); return;
+      sellIds(commons.map(function (m) { return m.item.id; }), function (got, n) { toast('Продано ' + n + ' · +' + money(got)); replacePage('stock'); }); return;
     }
     if (t.closest('#lockBtn')) {
       var it = findItem(pages[pages.length - 1].arg);
-      if (it) { it.lock = !it.lock; save(); buzz('sel'); replacePage('num', it.id); toast(it.lock ? 'Закреплён: не продаётся и не идёт в апгрейд' : 'Откреплён'); }
+      if (it) run('lock', { id: it.id, on: !it.lock }).then(function (r) { buzz('sel'); replacePage('num', it.id); toast(r.lock ? 'Закреплён: не продаётся и не идёт в апгрейд' : 'Откреплён'); }, showErr);
       return;
     }
     if (t.closest('#numUpg')) { var ui = pages[pages.length - 1].arg; if (upgOk(findItem(ui))) { upg.ids = [ui]; upg.last = null; openPage('upg'); } return; }
@@ -2812,50 +2714,50 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if ((el = t.closest('[data-buyer]'))) { openBuyer(Number(el.getAttribute('data-buyer'))); return; }
     if (t.closest('#startEvent')) {
       var ek = EVENTS[Number(radio('evKind'))], ed = EV_DUR[Number(radio('evDur'))];
-      S.event = { kind: ek[0], v: ek[1] };
-      if (ed[0] === 'left') S.event.left = ed[1]; else S.event.until = Date.now() + ed[1] * 3600e3;
-      adminLog('Ивент запущен', eventTitle(S.event) + ' · ' + eventLeft(S.event)); save(); replacePage('dev'); renderPills(); renderMain(); toast('Ивент: ' + eventTitle(S.event)); return;
+      worldDo({ kind: 'eventStart', ev: ek[0], v: ek[1], left: ed[0] === 'left' ? ed[1] : 0, hours: ed[0] === 'hours' ? ed[1] : 0 }, function (r) { replacePage('dev'); toast('Ивент: ' + r.msg); }); return;
     }
-    if (t.closest('#stopEvent')) { adminLog('Ивент остановлен', S.event ? eventTitle(S.event) : ''); S.event = null; save(); replacePage('dev'); renderPills(); renderMain(); toast('Ивент остановлен'); return; }
+    if (t.closest('#stopEvent')) { worldDo({ kind: 'eventStop' }, function () { replacePage('dev'); toast('Ивент остановлен'); }); return; }
     if ((el = t.closest('#numSell'))) {
       var item = findItem(pages[pages.length - 1].arg); if (!item || item.lock) return;
       if (!armed(el, 'Точно? +' + priceLabel(evOf(item)))) return;
-      var g = sellIds([item.id]); toast('Продано · +' + money(g)); goBack(); if (pages.length) replacePage(pages[pages.length - 1].name, pages[pages.length - 1].arg); return;
+      sellIds([item.id], function (g) { toast('Продано · +' + money(g)); goBack(); if (pages.length) replacePage(pages[pages.length - 1].name, pages[pages.length - 1].arg); }); return;
     }
     if (t.closest('#devRegions')) { openEditor(); return; }
     if ((el = t.closest('[data-devtab]'))) { devTab = el.getAttribute('data-devtab'); replacePage('dev'); $('page').scrollTop = 0; buzz('sel'); return; }
     if ((el = t.closest('[data-act]'))) { openAct(el.getAttribute('data-act')); return; }
     if (t.closest('#pFind')) {
-      var q = val('pSearch').toLowerCase().replace(/^@/, '');
-      if (!q) { $('pMsg').innerHTML = '<span class="warn">Введите @username или ID.</span>'; return; }
-      $('pMsg').innerHTML = q === username() || q === tgUserId() ? '<span>Это ты — карточка ниже.</span>'
-        : '<span class="warn">Игрок «' + esc(q) + '» не найден: поиск по всем игрокам заработает с сервером.</span>';
+      var q = val('pSearch');
+      run('admin.find', { q: q }).then(function (r) {
+        if (r.players.length === 1) { devTarget = r.players[0]; devFound = null; } else devFound = r.players;
+        replacePage('dev');
+        var m = $('pMsg');
+        if (m) m.innerHTML = r.players.length ? '<span>Найдено: ' + r.players.length + (SRV ? ' · всего игроков: ' + r.total : '') + '</span>'
+          : '<span class="warn">Игрок «' + esc(q) + '» не найден' + (SRV ? '' : ': в демо есть только ты') + '.</span>';
+        var si = $('pSearch'); if (si) si.value = q;
+      }, showErr);
       return;
     }
+    if ((el = t.closest('[data-ptarget]'))) {
+      var pid = Number(el.getAttribute('data-ptarget'));
+      devTarget = (devFound || []).filter(function (x) { return x.id === pid; })[0] || null; devFound = null; replacePage('dev'); buzz('sel'); return;
+    }
+    if (t.closest('#pSelf')) { devTarget = null; devFound = null; replacePage('dev'); return; }
     if (t.closest('#wNoticeGo')) {
-      var txt = val('wNotice').slice(0, 140); if (!txt) { toast('Напиши текст объявления'); return; }
-      var hrs = Number(radio('wNoticeDur'));
-      S.notice = { text: txt, until: hrs ? Date.now() + hrs * 3600e3 : 0 }; adminLog('Объявление', txt); save(); renderPills(); replacePage('dev'); toast('Объявление на главной'); return;
+      worldDo({ kind: 'notice', text: val('wNotice'), hours: Number(radio('wNoticeDur')) }, function () { replacePage('dev'); toast('Объявление на главной'); }); return;
     }
-    if (t.closest('#wNoticeOff')) { S.notice = null; adminLog('Объявление убрано', ''); save(); renderPills(); replacePage('dev'); return; }
-    if (t.closest('#wBuyersNew')) {
-      S.buyers = { day: dayKey(0), sold: {}, seed: ((S.buyers && S.buyers.seed) || 0) + 1 }; buyersCache = null;
-      adminLog('Новые скупщики', buyersToday().map(function (b) { return b.name; }).join(', ')); save(); renderPills(); toast('Пришли новые скупщики'); return;
-    }
-    if ((el = t.closest('#wBuyersNow'))) { S.buyersNow = !S.buyersNow; el.setAttribute('aria-checked', String(S.buyersNow)); adminLog('Скупщики приходят сразу', S.buyersNow ? 'вкл' : 'выкл'); save(); renderPills(); return; }
+    if (t.closest('#wNoticeOff')) { worldDo({ kind: 'noticeOff' }, function () { replacePage('dev'); }); return; }
+    if (t.closest('#wBuyersNew')) { worldDo({ kind: 'buyersNew' }, function () { toast('Пришли новые скупщики'); }); return; }
+    if ((el = t.closest('#wBuyersNow'))) { var bsw = el; worldDo({ kind: 'buyersNow', on: !S.buyersNow }, function () { bsw.setAttribute('aria-checked', String(!!S.buyersNow)); }); return; }
     if (t.closest('#pGen')) { $('pCode').value = genCode(); buzz('sel'); return; }
     if (t.closest('#pCreate')) { createPromo(); return; }
-    if ((el = t.closest('[data-del-promo]'))) { var pc = el.getAttribute('data-del-promo'); S.promos = S.promos.filter(function (p) { return p.code !== pc; }); adminLog('Промокод удалён', pc); save(); replacePage('dev'); return; }
-    if (t.closest('#addAdmin')) {
-      var nm = val('gAdmin').toLowerCase().replace(/^@/, ''); if (!/^[a-z0-9_]{3,32}$/.test(nm)) { toast('Юзернейм: латиница, цифры и _'); return; }
-      S.custom.admins = (S.custom.admins || []).filter(function (a) { return a !== nm; }).concat([nm]); adminLog('Добавлен разработчик', '@' + nm); save(); replacePage('dev'); return;
-    }
-    if ((el = t.closest('[data-del-admin]'))) { var a = el.getAttribute('data-del-admin'); S.custom.admins = (S.custom.admins || []).filter(function (x) { return x !== a; }); adminLog('Убран разработчик', '@' + a); save(); replacePage('dev'); return; }
+    if ((el = t.closest('[data-del-promo]'))) { worldDo({ kind: 'promoDelete', code: el.getAttribute('data-del-promo') }, function () { replacePage('dev'); }); return; }
+    if (t.closest('#addAdmin')) { worldDo({ kind: 'adminAdd', username: val('gAdmin') }, function () { replacePage('dev'); }); return; }
+    if ((el = t.closest('[data-del-admin]'))) { worldDo({ kind: 'adminDel', username: el.getAttribute('data-del-admin') }, function () { replacePage('dev'); }); return; }
   });
   $('page').addEventListener('change', function (e) {
     var id = e.target.id;
     if (e.target.name === 'sort') { stockView.sort = e.target.value; replacePage('stock'); return; }
-    if (e.target.name === 'holiday') { S.holiday = e.target.value; adminLog('Оформление', (HOLIDAYS.filter(function (h) { return h[0] === S.holiday; })[0] || ['', ''])[1]); save(); applyHoliday(); renderMain(); buzz('sel'); return; }
+    if (e.target.name === 'holiday') { worldDo({ kind: 'holiday', holiday: e.target.value }, function () { applyHoliday(); renderMain(); buzz('sel'); }); return; }
     if (e.target.name === 'pKind') { $('pMoneyBox').hidden = e.target.value !== 'money'; $('pTierBox').hidden = e.target.value === 'money'; return; }
   });
   $('page').addEventListener('input', function (e) {
@@ -2900,6 +2802,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }
   }
   boot();
+  connect().then(function (ok) {
+    booting = false;
+    if (ok) { current = null; batch = null; upg.ids = []; upg.last = null; devTarget = null; boot(); }
+    else renderMain();
+  });
 })();
 </script>
 
