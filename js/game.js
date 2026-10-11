@@ -73,7 +73,7 @@
   function freshPlayer() {
     return { v: 5, balance: E.CONFIG.startBalance, level: 1, xp: 0, pity: {}, items: [], last: null,
       daily: { last: null, streak: 0 }, jobAt: 0, issued: 0, best: null, log: [], tot: {},
-      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null, main: null, gifts: null };
+      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null, main: null, gifts: null, prefs: null };
   }
   function freshWorld() {
     return { event: null, notice: null, holiday: 'none', promos: [], custom: { regions: [], ops: {}, admins: [] },
@@ -402,9 +402,25 @@
 
   // Начать заново: всё по игроку с нуля (настройки мира и интерфейса не трогаем).
   OPS.reset = function (P) {
-    var f = freshPlayer();
+    var f = freshPlayer(), prefs = P.prefs;
     PLAYER_KEYS.forEach(function (k) { P[k] = f[k]; });
+    P.prefs = prefs;
     return {};
+  };
+
+  // Настройки интерфейса (тема, звук, страна…) — хранятся у игрока, чтобы не терялись при перезаходе.
+  var VIEWS = ['list', 'tiles', 'cards'], THEMES = ['auto', 'light', 'dark'];
+  OPS.prefs = function (P, W, a) {
+    var x = a.prefs || {}, out = {};
+    if (THEMES.indexOf(x.theme) >= 0) out.theme = x.theme;
+    if (typeof x.sound === 'boolean') out.sound = x.sound;
+    if (typeof x.fast === 'boolean') out.fast = x.fast;
+    if (typeof x.country === 'string' && /^[a-z0-9]{1,16}$/.test(x.country)) out.country = x.country;
+    if (SIZES.indexOf(x.batch) >= 0) out.batch = x.batch;
+    if (VIEWS.indexOf(x.stockView) >= 0) out.stockView = x.stockView;
+    if (Array.isArray(x.favs)) out.favs = x.favs.filter(function (k) { return typeof k === 'string' && /^[a-z0-9]{1,16}$/.test(k); }).slice(0, 40);
+    P.prefs = out;
+    return { prefs: out };
   };
 
   /* ================= подарок: номер переходит от P к TP ================= */

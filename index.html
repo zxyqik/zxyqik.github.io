@@ -121,11 +121,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
 .logo.md { width: 30px; height: 30px; border-radius: 8px; }
 .logo.md.ci { border-radius: 50%; }
 .reel { position: relative; width: 1ch; height: 1.2em; overflow: hidden; }
-.fl { position: absolute; inset: .07em .02em; border-radius: .09em; display: grid; place-items: center; perspective: 240px; overflow: hidden; transition: opacity .35s ease, background-color .3s ease; }
+.fl { position: absolute; inset: .07em .02em; border-radius: .09em; display: grid; place-items: center; overflow: hidden; transition: opacity .35s ease, background-color .3s ease; }
 .fl::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--bg); opacity: 0; transition: opacity .3s ease; }
 .digits.flapping .fl { background: color-mix(in srgb, var(--text) 9%, transparent); }
 .digits.flapping .fl::after { opacity: 1; }
-.fd { display: block; line-height: 1.06em; transform-origin: 50% 50%; backface-visibility: hidden; will-change: transform; }
+.fd { display: block; line-height: 1.06em; transform-origin: 50% 50%; will-change: transform; }
 .final { display: block; height: 1.2em; line-height: 1.2em; text-align: center; }
 .final { position: absolute; inset: 0; opacity: 0; transition: opacity .38s ease; }
 .reel.on .fl { opacity: 0; }
@@ -392,10 +392,47 @@ select.inp { appearance: none; -webkit-appearance: none; }
 .sel-foot .sel-links { display: flex; justify-content: center; gap: 18px; margin-bottom: 8px; }
 .sel-foot .sel-links button { color: var(--accent); font-size: 14px; font-weight: 600; }
 /* страница номера: тап по цифре */
-.nc-num { perspective: 400px; }
-.nd { font: inherit; color: inherit; background: none; border: 0; padding: 0 .02em; border-radius: 8px; cursor: pointer; transform-origin: 50% 50%; }
-.nd:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
-.nd.sel { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+
+.nd { font: inherit; color: inherit; background: none; border: 0; padding: 0 .02em; border-radius: 8px; cursor: pointer; transform-origin: 50% 50%; isolation: isolate; }
+/* подсветка — подложкой, а не фоном самой цифры: фон у редких номеров занят градиентом текста */
+.nd::before { content: ''; position: absolute; inset: 0; border-radius: 8px; z-index: -1; transition: background-color .15s ease; }
+.nd:hover::before { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.nd.sel::before { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+/* Градиент редких номеров — на каждой цифре отдельно: на iPhone градиент строки не закрашивает
+   цифры-кнопки внутри, и они становились прозрачными. */
+.nc-num.tc4, .nc-num.tc5, .nc-num.tc6 { background-image: none; animation: none; color: var(--text); -webkit-text-fill-color: currentColor; }
+.nc-num.tc4 .nd, .nc-num.tc4 .nsep, .nc-num.tc5 .nd, .nc-num.tc5 .nsep, .nc-num.tc6 .nd, .nc-num.tc6 .nsep {
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; background-size: 300% 100%; }
+.rr-num { display: flex; justify-content: center; align-items: center; gap: 3px; font-size: clamp(26px, 8.4vw, 36px); font-weight: 600; margin: 6px 0 12px; }
+.rr-d { font: inherit; color: var(--text); background: var(--bg-2); border: 0; border-radius: 10px; width: 1.12em; height: 1.45em; display: grid; place-items: center; cursor: pointer; transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.rr-d.sel { background: var(--accent); color: var(--accent-ink); transform: translateY(-3px); box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 38%, transparent); }
+.rr-d:disabled { cursor: default; }
+.rr-sep { color: var(--hint); font-size: .6em; }
+.rr-price { display: flex; align-items: baseline; justify-content: center; gap: 8px; color: var(--hint); font-size: 13px; margin-bottom: 12px; }
+.rr-price b { font-size: 21px; color: var(--text); font-weight: 700; }
+.rr-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.rr-o { border-radius: 12px; background: var(--bg-2); padding: 8px 2px 7px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.rr-o b { font-size: 22px; font-weight: 650; line-height: 1.15; }
+.rr-o .dl { font-size: 11px; font-weight: 650; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.rr-o .pp { font-size: 10.5px; color: var(--hint); }
+.rr-o.up { background: color-mix(in srgb, var(--c1) 13%, var(--bg-2)); } .rr-o.up .dl { color: var(--c1); }
+.rr-o.down .dl { color: var(--danger); }
+.rr-o.same .dl, .rr-o.cur .dl { color: var(--hint); }
+.rr-o.cur { box-shadow: inset 0 0 0 1.5px var(--line); }
+.rr-o.hit { box-shadow: inset 0 0 0 2px var(--accent); animation: hitPop .6s ease; }
+@keyframes hitPop { 30% { transform: scale(1.08); } }
+.rr-bar { display: flex; height: 8px; border-radius: 6px; overflow: hidden; margin: 14px 0 7px; background: var(--bg-2); }
+.rr-bar i { display: block; height: 100%; }
+.rr-bar .u, .rr-leg i.u { background: var(--c1); } .rr-bar .s, .rr-leg i.s { background: color-mix(in srgb, var(--hint) 55%, transparent); } .rr-bar .d, .rr-leg i.d { background: var(--danger); }
+.rr-leg { display: flex; justify-content: space-between; gap: 6px; font-size: 12.5px; color: var(--hint); margin-bottom: 12px; }
+.rr-leg i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.rr-leg b { color: var(--text); }
+.rr-res { text-align: center; font-weight: 650; font-size: 15px; margin: 0 0 10px; animation: resIn .3s ease; }
+.rr-res.up { color: var(--c1); } .rr-res.down { color: var(--danger); } .rr-res.none { color: var(--hint); }
+.nc-num .nd { text-decoration: underline dotted color-mix(in srgb, var(--hint) 70%, transparent); text-underline-offset: .18em; text-decoration-thickness: 2px; }
+.nc-num.tc4 .nd, .nc-num.tc4 .nsep { background-image: linear-gradient(100deg, var(--c4) 0%, var(--c4) 35%, #FFF2C4 48%, var(--c4) 62%, var(--c4) 100%); background-size: 260% 100%; background-position: 0 0; }
+.nc-num.tc5 .nd, .nc-num.tc5 .nsep { background-image: linear-gradient(100deg, var(--c5), #FF9A3C, #B3122A, var(--c5), #FF9A3C); animation: flow 2.6s linear infinite; }
+.nc-num.tc6 .nd, .nc-num.tc6 .nsep { background-image: linear-gradient(100deg, var(--sx-a), var(--sx-b), var(--sx-a), var(--sx-b), var(--sx-a)); animation: flow 3.4s linear infinite; }
 .nc-hint { color: var(--hint); font-size: 12.5px; }
 .rrbox { background: var(--bg-2); border-radius: 14px; padding: 12px; margin-top: 6px; display: flex; flex-direction: column; gap: 10px; }
 .oc-row { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
@@ -431,6 +468,42 @@ select.inp { appearance: none; -webkit-appearance: none; }
 .td.tc6 i { background: linear-gradient(135deg, var(--sx-a) 50%, var(--sx-b) 50%); box-shadow: 0 0 0 1px var(--line); }
 button.pity { display: block; width: 100%; text-align: left; }
 .pity .td { font-size: 11.5px; margin-left: 7px; }
+.odds-chip { display: inline-block; padding: 2px 8px; margin-right: 8px; border-radius: 7px; background: var(--bg-2); color: var(--text); font-weight: 650; }
+.odds-row .ch { font-weight: 700; font-size: 16px; }
+.odds-row .t small b { color: var(--text); font-weight: 600; }
+.odds-boost { margin: 2px 0 10px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); font-size: 14px; }
+/* аватарка игрока — в кнопке меню, рядом маленький значок меню */
+#menuBtn .ava { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+#menuBtn.has-ava > svg { opacity: 0; }
+#menuBtn .ava-b { display: none; position: absolute; right: -4px; bottom: -4px; width: 17px; height: 17px; border-radius: 50%; background: var(--bg); color: var(--text); place-items: center; box-shadow: 0 0 0 1.5px var(--line); }
+#menuBtn.has-ava .ava-b { display: grid; }
+#menuBtn .ava-b svg { width: 10px; height: 10px; }
+#menuBtn .dot { z-index: 2; }
+.tava { position: relative; width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; overflow: hidden; }
+.tava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.top-row .rank { width: 26px; }
+.top-row.tap { cursor: pointer; }
+/* сообщения */
+.badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; flex: none; }
+.cl-row .t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-row .cl-time { color: var(--hint); font-size: 12px; align-self: flex-start; margin-top: 3px; white-space: nowrap; }
+.cl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.chat-page { display: flex; flex-direction: column; min-height: calc(var(--tg-viewport-stable-height, 100vh) - 60px); }
+.chat-ph h1 { display: flex; align-items: center; gap: 10px; font-size: 18px; min-width: 0; }
+.chat-ph h1 .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-ph h1 small { display: block; font-size: 12.5px; font-weight: 400; color: var(--hint); }
+.chat-list { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px 0 8px; }
+.bub { max-width: 82%; padding: 8px 12px 5px; border-radius: 18px; border-bottom-left-radius: 6px; background: var(--bg-2); align-self: flex-start; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.35; animation: resIn .2s ease; }
+.bub.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-left-radius: 18px; border-bottom-right-radius: 6px; }
+.bub time { display: block; text-align: right; font-size: 11px; opacity: .6; margin-top: 1px; }
+.chat-day { align-self: center; font-size: 12px; color: var(--hint); margin: 10px 0 4px; }
+.chat-more { align-self: center; color: var(--accent); font-weight: 600; font-size: 14px; padding: 6px 10px; }
+.chat-empty { margin: auto 0; text-align: center; color: var(--hint); padding: 30px 10px; }
+.chat-bar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: flex-end; padding: 10px 0 4px; background: linear-gradient(transparent, var(--bg) 30%); }
+.chat-bar .inp { flex: 1; min-height: 42px; max-height: 120px; resize: none; border-radius: 21px; padding: 10px 14px; line-height: 1.35; font-family: var(--ui); }
+.chat-bar .send { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.chat-bar .send:disabled { opacity: .45; }
+.chat-bar .send svg { width: 20px; height: 20px; }
 .pills { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
 .pills::-webkit-scrollbar { display: none; }
 .pill { flex: none; height: 30px; padding: 0 12px; border-radius: 15px; background: var(--bg-2); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -706,6 +779,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   <header class="top">
     <button class="ghost round" id="menuBtn" type="button" aria-label="Меню">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 8h14M5 16h14"/></svg>
+      <img class="ava" id="menuAva" alt="" hidden>
+      <span class="ava-b" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 8h14M5 16h14"/></svg></span>
       <span class="dot" id="menuDot" hidden></span>
     </button>
     <div class="brand"><span class="brand-mark" id="brandMark"></span><b class="brand-tx">Финансовый <span>ход</span></b></div>
@@ -965,12 +1040,36 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   // SRV не null, когда игра открыта в Telegram и её раздаёт сервер: тогда всё считает сервер.
   // offline — текст ошибки, если сервер есть, но войти не удалось: тогда игра ждёт сервер, а не играет в демо.
   var SRV = null, offline = '', booting = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+  // В Telegram сразу берём настройки из кэша устройства (тема не мигает), потом — с сервера.
+  if (booting) try { var pc = JSON.parse(localStorage.getItem(KEY + '-prefs')); if (pc) PREF_KEYS.forEach(function (k) { if (pc[k] !== undefined) S[k] = pc[k]; }); } catch (e) {}
+  var SERVER_PREFS = ['country', 'sound', 'fast', 'theme', 'favs', 'batch', 'stockView'], prefsSent = '', prefsTimer = 0;
   // Адрес игры с сервером. Старая копия на GitHub Pages, открытая из Telegram, перекидывает сюда.
   var GAME_URL = 'https://fin-hod.online/';
   // Ссылка на игру в Telegram — её отправляют друзьям вместе с номером.
   var SHARE_URL = 'https://t.me/FinancoviHod_bot/play';
+  // Настройки на сервер — с задержкой и только если поменялись.
+  function syncPrefs() {
+    if (!SRV || offline || booting) return;
+    var now = JSON.stringify(G.pick(S, SERVER_PREFS));
+    if (now === prefsSent) return;
+    clearTimeout(prefsTimer);
+    prefsTimer = setTimeout(function () {
+      var send = JSON.stringify(G.pick(S, SERVER_PREFS));
+      if (send === prefsSent) return;
+      apiCall('api/op', { op: 'prefs', args: { prefs: JSON.parse(send) } }).then(function () { prefsSent = send; }, function () {});
+    }, 700);
+  }
+  // С сервера настройки берём только при входе и полном обновлении — пока свои ещё не ушли, их не трогаем.
+  function takeServerPrefs(p) {
+    if (!p) return;
+    if (prefsSent && JSON.stringify(G.pick(S, SERVER_PREFS)) !== prefsSent) return;
+    SERVER_PREFS.forEach(function (k) { if (p[k] !== undefined) S[k] = p[k]; });
+    prefsSent = JSON.stringify(G.pick(S, SERVER_PREFS));
+    applyTheme();
+  }
   function save() {
     try {
+      syncPrefs();
       if (SRV) localStorage.setItem(KEY + '-prefs', JSON.stringify(G.pick(S, PREF_KEYS)));
       else localStorage.setItem(KEY, JSON.stringify(S));
     } catch (e) {}
@@ -986,14 +1085,69 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
         function () { return { ok: false, error: 'Нет связи с сервером. Проверь интернет.' }; })
       .then(function (j) { if (!j || !j.ok) throw gameErr((j && j.error) || 'Ошибка сервера.'); return j; });
   }
+  // Версии состояния на сервере: по ним фоновая проверка понимает, что пора обновиться.
+  var srvRev = 0, srvWrev = 0, unread = 0;
+  function setUnread(n) { unread = n; renderDot(); }
+  // Ответ на действие приходит изменениями (склад, журнал), ответ /api/state — целиком.
   function applyServer(j) {
-    var W = j.world;
-    G.PLAYER_KEYS.forEach(function (k) { S[k] = j.player[k]; });
-    ['event', 'notice', 'holiday', 'buyersSeed', 'buyersNow', 'custom'].forEach(function (k) { S[k] = W[k]; });
-    S.promos = W.promos || []; S.adminLog = W.adminLog || [];
-    SRV.me = j.me; SRV.owners = W.owners || [];
+    var P = j.player, full = !j.items;
+    if (full) G.PLAYER_KEYS.forEach(function (k) { S[k] = P[k]; });
+    else {
+      G.PLAYER_KEYS.forEach(function (k) { if (k !== 'items' && k !== 'log' && P[k] !== undefined) S[k] = P[k]; });
+      var del = {}, upd = {};
+      j.items.del.forEach(function (id) { del[id] = true; });
+      j.items.upd.forEach(function (x) { upd[x.id] = x; });
+      S.items = j.items.add.concat(S.items.filter(function (x) { return !del[x.id]; }).map(function (x) { return upd[x.id] || x; }));
+      if (j.log.all) S.log = j.log.all;
+      else { S.log = j.log.add.concat(S.log); if (S.log.length > 300) S.log.length = 300; }
+    }
+    if (j.world) {
+      var W = j.world, hol = S.holiday;
+      ['event', 'notice', 'holiday', 'buyersSeed', 'buyersNow', 'custom'].forEach(function (k) { S[k] = W[k]; });
+      S.promos = W.promos || []; S.adminLog = W.adminLog || []; SRV.owners = W.owners || [];
+      if (hol !== S.holiday && !booting) applyHoliday();
+    }
+    SRV.me = j.me;
+    if (j.rev) srvRev = j.rev;
+    if (j.wrev != null) srvWrev = j.wrev;
     rebuildCountries(); save();
+    // склад разошёлся с сервером (так быть не должно) — подтянуть всё целиком
+    if (!full && S.items.length !== j.items.n) setTimeout(refreshFromServer, 0);
   }
+
+  // ----- живое обновление: выдачи от разработчика, подарки, оформление и сообщения — без перезахода
+  var syncing = false;
+  function syncTick() {
+    if (!SRV || offline || booting || syncing || document.hidden) return;
+    syncing = true;
+    apiCall('api/sync').then(function (j) {
+      syncing = false;
+      if (j.unread != null) {
+        var top = pages[pages.length - 1];
+        if (j.unread > unread && !(top && top.name === 'chat')) toast('💬 Новое сообщение');
+        if (j.unread !== unread && top && top.name === 'chats') loadChats();
+        setUnread(j.unread);
+      }
+      if (j.rev !== srvRev || j.wrev !== srvWrev) refreshFromServer();
+    }, function () { syncing = false; });
+  }
+  function refreshFromServer() {
+    if (!SRV || offline) return;
+    if (busy || rr.busy || upg.busy) { setTimeout(refreshFromServer, 1500); return; }
+    var hol = S.holiday;
+    apiCall('api/state').then(function (j) {
+      if (busy || rr.busy || upg.busy) { setTimeout(refreshFromServer, 1500); return; }
+      applyServer(j);
+      if (S.holiday !== hol) applyHoliday();
+      renderBalance(true); renderLevel(); renderPity(); renderDot(); renderPills(); renderCountry(); renderMain();
+      if (current && !findItem(current.item.id)) refreshMain();
+      // открытую страницу перерисовать, если в ней сейчас ничего не печатают
+      var top = pages[pages.length - 1], ae = document.activeElement;
+      if (top && top.name !== 'chat' && !open && !(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName))) { var y = $('page').scrollTop; replacePage(top.name, top.arg); $('page').scrollTop = y; }
+    }, function () {});
+  }
+  setInterval(syncTick, 12000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) syncTick(); });
   // Подключение: страница открыта в Telegram, и рядом отвечает сервер игры.
   function connect() {
     if (!tg || !tg.initData) return Promise.resolve(false);
@@ -1009,7 +1163,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     });
   }
   function loadState() {
-    return apiCall('api/state').then(function (j) { offline = ''; applyServer(j); return true; },
+    return apiCall('api/state').then(function (j) {
+      offline = ''; applyServer(j);
+      if (j.player.prefs) takeServerPrefs(j.player.prefs); else prefsSent = '';
+      applyTheme();
+      return true;
+    },
       function (e) { offline = e.message; toast(e.message); return false; });
   }
   // Данные запуска Telegram передаёт в адресе после «#» — отдаём их серверу вместе с переходом.
@@ -1026,8 +1185,16 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     booting = true; renderMain();
     loadState().then(afterConnect);
   }
+  function loadAvatar() {
+    if (!SRV || !SRV.me) return;
+    var img = $('menuAva');
+    img.onload = function () { img.hidden = false; $('menuBtn').classList.add('has-ava'); };
+    img.onerror = function () { img.hidden = true; $('menuBtn').classList.remove('has-ava'); };
+    img.src = 'api/avatar/' + Number(SRV.me.id);
+  }
   function afterConnect(ok) {
     booting = false;
+    if (ok) { syncPrefs(); loadAvatar(); }
     if (ok) { current = null; batch = null; upg.ids = []; upg.last = null; devTarget = null; boot(); }
     else renderMain();
   }
@@ -1035,7 +1202,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function run(op, args) {
     args = args || {};
     if (offline) return Promise.reject(gameErr(offline));
-    if (SRV) return apiCall('api/op', { op: op, args: args }).then(function (j) { applyServer(j); return j.result; });
+    if (SRV) return apiCall('api/op', { op: op, args: args, diff: true }).then(function (j) { applyServer(j); return j.result; });
     try {
       var ctx = { now: Date.now(), user: { username: username() }, admin: isAdmin() }, res;
       if (op.indexOf('admin.') === 0) {
@@ -1062,32 +1229,29 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   /* ---------------- Telegram ---------------- */
   // Тема: «авто» — как в Telegram (или в системе вне Telegram), либо всегда светлая / тёмная.
+  // У Telegram берём только «светлая или тёмная»: цвета своих тем Telegram (красная, розовая…)
+  // с нашими не сочетались. Шапку и низ окна Telegram красим в наш фон.
   function applyTheme() {
-    var root = document.documentElement, r = root.style, mode = S.theme || 'auto';
-    ['--bg', '--bg-2', '--text', '--hint'].forEach(function (k) { r.removeProperty(k); });
+    var root = document.documentElement, mode = S.theme || 'auto';
     if (mode !== 'auto') root.dataset.theme = mode;
-    else if (tg && tg.themeParams) {
-      var p = tg.themeParams;
-      if (p.bg_color) r.setProperty('--bg', p.bg_color);
-      if (p.secondary_bg_color) r.setProperty('--bg-2', p.secondary_bg_color);
-      if (p.text_color) r.setProperty('--text', p.text_color);
-      if (p.hint_color) r.setProperty('--hint', p.hint_color);
-      root.dataset.theme = tg.colorScheme === 'dark' ? 'dark' : 'light';
-    } else delete root.dataset.theme;
+    else if (tg) root.dataset.theme = tg.colorScheme === 'dark' ? 'dark' : 'light';
+    else delete root.dataset.theme;
     if (!tg) return;
     try {
-      var c = mode === 'auto' ? 'bg_color' : getComputedStyle(root).getPropertyValue('--bg').trim();
+      var c = getComputedStyle(root).getPropertyValue('--bg').trim();
       if (tg.setHeaderColor) tg.setHeaderColor(c);
       if (tg.setBackgroundColor) tg.setBackgroundColor(c);
       if (tg.setBottomBarColor) tg.setBottomBarColor(c);
     } catch (e) {}
   }
+  function cssVar(k) { return getComputedStyle(document.documentElement).getPropertyValue(k).trim(); }
   if (tg) {
     document.documentElement.classList.add('in-tg');
     try {
       tg.ready(); tg.expand();
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       tg.onEvent('themeChanged', function () { applyTheme(); renderMain(); });
+      tg.onEvent('activated', function () { syncTick(); });
       tg.MainButton.onClick(function () { onMain(); });
       tg.BackButton.onClick(function () { goBack(); });
       if (tg.SettingsButton) { tg.SettingsButton.show(); tg.SettingsButton.onClick(function () { openMenu(); }); }
@@ -1158,7 +1322,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function renderLevel() { $('lvl').textContent = 'ур. ' + S.level; $('xpbar').style.width = Math.min(100, S.xp / E.xpToNext(S.level) * 100) + '%'; }
   function renderPity() {
-    $('pity').innerHTML = 'Гарант через' + E.pityLeft(S.pity).map(function (x) { return '<span class="td tc' + x.tier + '"><i></i>' + x.left + '</span>'; }).join('');
+    $('pity').innerHTML = '<span class="odds-chip">Шансы %</span>Гарант через' + E.pityLeft(S.pity).map(function (x) { return '<span class="td tc' + x.tier + '"><i></i>' + x.left + '</span>'; }).join('');
   }
   function renderCountry() {
     if (S.country === 'any') { $('countryFlag').innerHTML = flagSvg('any'); $('countryTx').textContent = 'Любые номера'; return; }
@@ -1166,7 +1330,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     $('countryFlag').innerHTML = flagSvg(c.key);
     $('countryTx').textContent = '+' + c.code + ' ' + c.name;
   }
-  function renderDot() { $('menuDot').hidden = !dailyStatus().available; }
+  function renderDot() { $('menuDot').hidden = !(dailyStatus().available || unread > 0); }
 
   /* ---------------- табло: цифры перелистываются, как на вокзальном табло ---------------- */
   var reels = [];
@@ -1182,14 +1346,20 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     });
   })();
   function setPos(r, pos) { r.pos = ((pos % 10) + 10) % 10; r.fd.textContent = String(r.pos); }
-  // Один щелчок табло: половинка уходит вниз, появляется следующая цифра.
+  // Один щелчок табло. Плоская анимация без 3D: на iPhone поворот на 90° давал мигание.
+  // Быстрые щелчки — цифра съезжает сверху; медленные — флажок «складывается» и раскрывается с новой цифрой.
   function flip(el, next, dur) {
     if (!el.animate || dur < 30) { el.textContent = next; return; }
+    if (dur < 100) {
+      el.textContent = next;
+      el.animate([{ transform: 'translateY(-22%) scaleY(.82)' }, { transform: 'none' }], { duration: dur, easing: 'ease-out' });
+      return;
+    }
     var half = dur / 2;
-    var a = el.animate([{ transform: 'rotateX(0deg)', opacity: 1 }, { transform: 'rotateX(-90deg)', opacity: 0.5 }], { duration: half, easing: 'ease-in', fill: 'forwards' });
+    var a = el.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(.08)' }], { duration: half, easing: 'ease-in', fill: 'forwards' });
     a.onfinish = function () {
       el.textContent = next;
-      el.animate([{ transform: 'rotateX(90deg)', opacity: 0.5 }, { transform: 'rotateX(0deg)', opacity: 1 }], { duration: half, easing: 'ease-out' });
+      el.animate([{ transform: 'scaleY(.08)' }, { transform: 'scaleY(1)' }], { duration: half, easing: 'ease-out' });
       a.cancel();
     };
   }
@@ -1375,9 +1545,38 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function issue(n) {
     busy = true; audio(); closeSheet();
     var before = S.balance;
+    if (SRV) preSpin(n);
     renderMain();
-    run('issue', { n: n, country: S.country }).then(function (r) { presentIssue(r, before, n); },
-      function (e) { busy = false; renderMain(); showErr(e); });
+    run('issue', { n: n, country: S.country }).then(function (r) { stopPreSpin(); presentIssue(r, before, n); },
+      function (e) { if (stopPreSpin()) unPreSpin(); busy = false; renderMain(); showErr(e); });
+  }
+  // Пока сервер отвечает, цифры уже перелистываются — нажатие откликается сразу.
+  var pre = null;
+  function preSpin(n) {
+    if (reduced || S.fast) return;
+    hide(); setRun(0); $('digits').classList.add('flapping');
+    document.querySelector('.r-spin .meta').textContent = n > 1 ? 'выпускаем ' + n + ' ' + plural(n, 'номер', 'номера', 'номеров') + '…' : SPIN_LINES[Math.floor(Math.random() * SPIN_LINES.length)];
+    setResult('spin');
+    var timers = [], k = 0;
+    reels.forEach(function (r, i) {
+      (function step() {
+        r.pos = (r.pos + 1) % 10; flip(r.fd, String(r.pos), 55);
+        if (i === 0 && ++k % 3 === 0) flapTick();
+        timers[i] = setTimeout(step, 55);
+      })();
+    });
+    pre = { stop: function () { timers.forEach(clearTimeout); } };
+  }
+  function stopPreSpin() { if (!pre) return false; pre.stop(); pre = null; return true; }
+  function unPreSpin() {
+    $('digits').classList.remove('flapping');
+    if (current) {
+      reels.forEach(function (r, i) { setPos(r, Number(current.item.d.charAt(i))); });
+      show(current.item, current.ev, true); setResult(batch ? 'batch' : 'main');
+    } else {
+      reels.forEach(function (r) { setPos(r, 0); });
+      $('sim').dataset.tier = '0'; $('digits').classList.add('idle'); setResult('intro');
+    }
   }
   // Показ выпуска: табло крутится, а результат уже посчитан (сервером или здесь же).
   function presentIssue(r, before, n) {
@@ -1468,7 +1667,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     $('stockTx').textContent = S.items.length + '/' + CAP; $('stockChip').classList.toggle('full', S.items.length >= CAP);
     if (tg) {
       try {
-        tg.MainButton.setParams({ text: text, is_visible: !pages.length, is_active: enabled, color: alt ? (tg.themeParams.secondary_bg_color || '#1B1E21') : getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), text_color: alt ? (tg.themeParams.text_color || '#ffffff') : getComputedStyle(document.documentElement).getPropertyValue('--accent-ink').trim() });
+        tg.MainButton.setParams({ text: text, is_visible: !pages.length, is_active: enabled, color: cssVar(alt ? '--bg-2' : '--accent'), text_color: cssVar(alt ? '--text' : '--accent-ink') });
         tg.MainButton.hideProgress();
       } catch (e) {}
     }
@@ -1512,6 +1711,9 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<span class="t">Награда дня<small>' + (st.available ? 'серия ' + st.streak + ' · ' + money(st.reward) : 'уже получена, приходи завтра') + '</small></span>' +
       (st.available ? '<span class="take">Забрать</span>' : '') + '</button>' +
       '<button class="row" type="button" id="stockRow">' + ic('#30B566', '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>') + '<span class="t">Склад<small>' + S.items.length + ' из ' + CAP + ' · продать, перекрутить цифру</small></span>' + CHEV + '</button>' +
+      '<button class="row" type="button" id="oddsRow">' + ic('#1D6FD0', '<circle cx="8" cy="8" r="2.4"/><circle cx="16" cy="16" r="2.4"/><path d="M18 6L6 18"/>') + '<span class="t">Шансы выпуска<small>Какая редкость как часто выпадает</small></span>' + CHEV + '</button>' +
+      '<button class="row" type="button" id="chatsRow">' + ic('#2D6BFF', '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17H10l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5z"/>') +
+        '<span class="t">Сообщения<small>' + (SRV ? 'Переписка с игроками' : 'Работают в игре через Telegram') + '</small></span>' + (unread > 0 ? '<span class="badge">' + unread + '</span>' : CHEV) + '</button>' +
       '<button class="row" type="button" id="topRow">' + ic('#E3A400', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4"/>') + '<span class="t">Топ игроков<small>' + (SRV ? 'Чей склад дороже и номер круче' : 'В демо — только ты') + '</small></span>' + CHEV + '</button>' +
       '<button class="row" type="button" id="upgRow">' + ic('#E8384F', '<path d="M12 19V5M6 11l6-6 6 6"/>') + '<span class="t">Апгрейдер<small>Поставь номера — получи один дороже</small></span>' + CHEV + '</button>' +
       '<button class="row" type="button" id="buyersRow">' + ic('#00AFCA', '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.4 3-5 5.5-5s4.7 1.6 5.5 5M16 5.2a3.2 3.2 0 0 1 0 5.6M17.6 14.2c1.6.7 2.6 2.3 2.9 4.8"/>') + '<span class="t">Скупщики<small>' + buyersSub() + '</small></span>' + CHEV + '</button>' +
@@ -1593,17 +1795,31 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<button class="btn" type="button" id="sheetSellAll">Продать все</button></div>';
     openSheet(html);
   }
-  // Справка по редкостям: открывается тапом по строке гарантов.
+  // Шансы и гаранты: открываются тапом по строке «Шансы % · Гарант через…» и из меню.
+  // Засекреченная редкость здесь не упоминается — её шанс и цена — тайна.
+  function pctLabel(p) {
+    var v = p * 100;
+    var t = v >= 10 ? String(Math.round(v)) : (v >= 1 ? v.toFixed(1) : v >= 0.1 ? v.toFixed(2) : v.toFixed(3)).replace(/0+$/, '').replace(/\.$/, '');
+    return t.replace('.', ',') + '%';
+  }
+  function priceRange(t) { return t.price[1] >= 1e4 ? nf.format(t.price[0] / 1000) + '–' + nf.format(t.price[1] / 1000) + ' тыс. ₽' : nf.format(t.price[0]) + '–' + nf.format(t.price[1]) + ' ₽'; }
   function openRarity() {
     if (busy) return;
     var left = {}; E.pityLeft(S.pity).forEach(function (x) { left[x.tier] = x.left; });
-    var html = '<h2>Редкости</h2><div class="group flat">';
+    var ev = eventNow(), luck = ev && ev.kind === 'luck' ? ev.v : 1;
+    var rest = 1 - E.TIERS.slice(1).reduce(function (sum, t) { return sum + t.chance * luck; }, 0);
+    var html = '<h2>Шансы выпуска</h2>';
+    if (luck > 1) html += '<div class="odds-boost">Сейчас ивент «Удача ×' + luck + '» — шансы редких номеров выше в ' + luck + ' раза.</div>';
+    html += '<div class="group flat">';
     E.TIERS.forEach(function (t, i) {
-      var sub = left[i] != null ? 'гарант через ' + left[i] + ' ' + plural(left[i], 'выпуск', 'выпуска', 'выпусков') : i === 0 ? 'всё остальное' : t.hidden ? 'шанс и цена засекречены' : 'без гаранта';
-      html += '<div class="row"><span class="td tc' + i + '"><i></i></span><span class="t"><span class="tname tc' + i + '">' + esc(t.name) + '</span><small>' + sub + '</small></span>' +
-        '<span class="v mono">' + (t.hidden ? '???' : t.price[1] >= 1e4 ? nf.format(t.price[0] / 1000) + '–' + nf.format(t.price[1] / 1000) + ' тыс. ₽' : nf.format(t.price[0]) + '–' + nf.format(t.price[1]) + ' ₽') + '</span></div>';
+      if (t.hidden) return;
+      var p = i === 0 ? rest : t.chance * luck, one = Math.round(1 / p);
+      var sub = (i === 0 ? 'всё остальное' : '1 из ' + nf.format(one)) + ' · ' + priceRange(t) +
+        (left[i] != null ? ' · гарант через <b>' + left[i] + '</b>' : '');
+      html += '<div class="row odds-row"><span class="td tc' + i + '"><i></i></span><span class="t"><span class="tname tc' + i + '">' + esc(t.name) + '</span><small>' + sub + '</small></span>' +
+        '<span class="v mono ch">' + pctLabel(p) + '</span></div>';
     });
-    html += '</div><p class="note">Когда номер выпадает, редкость видна только по цвету. Внутри редкости цена зависит от силы комбинации: за неё номер и продаётся. Гарант — если долго не везёт, редкость выпадет обязательно.</p>';
+    html += '</div><p class="note">Шанс — для одного выпуска. Редкость номера видна по цвету цифр, а цена внутри редкости зависит от силы комбинации. Гарант: если долго не везёт, номер этой редкости выпадет обязательно.</p>';
     openSheet(html);
   }
 
@@ -1791,6 +2007,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (t.closest('#buyersRow')) { closeSheet(); openPage('buyers'); return; }
     if (t.closest('#histRow')) { closeSheet(); openPage('hist'); return; }
     if (t.closest('#topRow')) { closeSheet(); openTop(); return; }
+    if (t.closest('#chatsRow')) { if (!SRV) { toast('Сообщения работают в игре через Telegram'); return; } closeSheet(); openChats(); return; }
+    if (t.closest('#chatNewGo')) { var cq = val('chatNewIn'); if (!cq) { $('chatNewMsg').innerHTML = '<span class="err">Напиши @username или ID.</span>'; return; } closeSheet(); openChat(cq); return; }
+    if (t.closest('#oddsRow')) { openRarity(); return; }
+    if ((el = t.closest('[data-rpos]'))) { if (!rr.busy) { rr.pos = Number(el.getAttribute('data-rpos')); rr.last = null; rerollRender(); buzz('sel'); } return; }
+    if (t.closest('#rrTry')) { rrTry(); return; }
     if ((el = t.closest('#giftGo'))) { sendGift(el); return; }
     if (t.closest('#promoRow')) { openPromo(); setTimeout(function () { var i = $('promoIn'); if (i) i.focus(); }, 350); return; }
     if (t.closest('#promoGo')) { redeem(); return; }
@@ -1875,19 +2096,18 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (open) { closeSheet(); return; }
     if (!pages.length) return;
     pages.pop();
-    if (pages.length) renderPage(false);
+    if (pages.length) { renderPage(false); if (pages[pages.length - 1].name === 'chats') loadChats(); }
     else { var p = $('page'); p.classList.remove('open'); setTimeout(function () { if (!pages.length) p.hidden = true; }, 320); refreshMain(); }
     syncBack(); renderMain();
   }
   function renderPage(slide) {
     var top = pages[pages.length - 1], p = $('page');
     var html = top.name === 'stock' ? stockHtml() : top.name === 'num' ? numHtml(top.arg) : top.name === 'upg' ? upgHtml()
-      : top.name === 'buyers' ? buyersHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : devHtml();
+      : top.name === 'buyers' ? buyersHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : top.name === 'chats' ? chatsHtml() : top.name === 'chat' ? chatHtml() : devHtml();
     $('pageBody').innerHTML = html;
     if (p.hidden) { p.hidden = false; requestAnimationFrame(function () { p.classList.add('open'); }); }
     if (slide !== false) p.scrollTop = 0;
     syncBack(); renderMain();
-    if (top.name === 'num') rrRender();
   }
   function pageHead(title, right) {
     return '<div class="ph"><button class="ghost round" type="button" data-back aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>' + title + '</h1>' + (right || '') + '</div>';
@@ -1990,14 +2210,13 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var cuts = {}, p = 0; c.groups.slice(0, -1).forEach(function (n) { p += n; cuts[p] = true; });
     var digits = item.d.split('').map(function (ch, i) {
       return (cuts[i] ? '<span class="nsep">' + (c.sep === '-' ? '-' : '&nbsp;') + '</span>' : '') +
-        '<button type="button" class="nd' + (rr.pos === i ? ' sel' : '') + '" data-pos="' + i + '" aria-label="Цифра ' + (i + 1) + ': ' + ch + '">' + ch + '</button>';
+        '<button type="button" class="nd" data-pos="' + i + '" aria-label="Перекрутить цифру ' + (i + 1) + ': ' + ch + '">' + ch + '</button>';
     }).join('');
     var html = pageHead('Номер');
     html += '<div class="ncard tier' + ev.tier + '"><div class="nc-head">' + logoHtml(opOf(item), 'md') + '<span class="t"><b>' + esc(netName(item)) + '</b><small>' + flagSvg(item.c) + ' ' + esc(c.name) + '</small></span></div>' +
       '<div class="nc-cc mono">+' + esc(c.code) + ' (' + esc(item.net) + ')</div><div class="nc-num mono tc' + ev.tier + '" id="ncNum">' + digits + '</div>' +
-      '<div class="nc-hint">' + (rr.pos === null ? 'Нажми на цифру, чтобы перекрутить её' : 'Перекручиваем ' + (rr.pos + 1) + '-ю цифру') + '</div></div>';
+      '<div class="nc-hint">Нажми на цифру, чтобы перекрутить её</div></div>';
     html += '<div class="nprice"><span class="label">цена</span><span class="est">' + esc(priceLabel(ev)) + '</span><span class="meta">' + nf.format(ev.points) + ' ' + plural(ev.points, 'очко', 'очка', 'очков') + '</span></div>';
-    if (rr.pos !== null) html += '<div class="rrbox" id="rrBox"></div>';
     var isMain = S.main === item.id;
     html += '<div class="nact"><button class="btn' + (isMain ? ' on' : '') + '" type="button" id="setMainBtn" aria-pressed="' + isMain + '">' + (isMain ? '★ Основной номер' : 'Сделать основным') + '</button>' +
       '<button class="btn" type="button" id="shareBtn">Похвастаться</button>' +
@@ -2017,59 +2236,80 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     return html;
   }
   function pct(p) { var v = p * 100; return (v >= 10 ? Math.round(v) : v >= 1 ? v.toFixed(1) : v >= 0.01 ? v.toFixed(2) : '<0,01').toString().replace('.', ',') + '%'; }
-  function rrRender() {
-    var box = $('rrBox'); if (!box) return;
-    var item = findItem(rr.id); if (!item || rr.pos === null) return;
-    var q = E.rerollQuote(item.d, rr.pos), cur = item.d.charAt(rr.pos), ev0 = evOf(item);
-    var cells = q.outcomes.map(function (o) {
-      var kind = o.digit === cur ? 'cur' : o.price > q.v0 ? 'up' : o.price < q.v0 ? 'down' : 'same';
-      return '<div class="oc ' + kind + '"><b class="mono">' + o.digit + '</b><i></i><span>' + pct(o.p) + '</span></div>';
-    }).join('');
-    var bestLine = '';
-    if (q.best) {
-      var bev = E.evaluate(q.best.digits);
-      bestLine = '<div class="rr-best">Лучшее: <span class="mono tc' + bev.tier + '">' + esc(fmtDigits(q.best.digits, item.c)) + '</span> · ' + esc(priceLabel(bev)) + ' · шанс ' + pct(q.best.p) + '</div>';
-    } else if (isSecret(ev0)) bestLine = '<div class="rr-best">Номер и так засекречен — почти любая цифра его удешевит.</div>';
-    else bestLine = '<div class="rr-best">Эта цифра уже на своём месте: дороже не станет.</div>';
-    box.innerHTML = '<div class="oc-row">' + cells + '</div>' +
-      '<div class="odds-l">' + (q.pUp > 0 ? '<span><i class="o-up"></i>дороже <b>' + pct(q.pUp) + '</b></span>' : '') +
-        (q.pSame > 0 ? '<span><i class="o-none"></i>так же <b>' + pct(q.pSame) + '</b></span>' : '') +
-        (q.pDown > 0 ? '<span><i class="o-down"></i>дешевле <b>' + pct(q.pDown) + '</b></span>' : '') + '</div>' +
-      bestLine +
-      '<button class="btn pri wide" type="button" id="rrTry"' + (rr.busy || S.balance < q.fee ? ' disabled' : '') + '>' +
-      (rr.busy ? 'Крутим…' : S.balance < q.fee ? 'Не хватает: нужно ' + money(q.fee) : 'Прокрутить · ' + money(q.fee)) + '</button>' +
-      (rr.last ? '<p class="mod-out ' + rr.last.kind + '">' + esc(rr.last.text) + '</p>' : '');
+  // ----- перекрутка цифры: шторка с номером, исходами и большой кнопкой
+  function compact(n) {
+    var a = Math.abs(n);
+    return a >= 1e6 ? (a / 1e6).toFixed(1).replace('.0', '').replace('.', ',') + ' млн' : a >= 1e4 ? nf.format(Math.round(a / 1000)) + ' тыс.' : nf.format(a) + ' ₽';
   }
+  function rerollHtml() {
+    var item = findItem(rr.id);
+    if (!item) return '<h2>Номер уже продан</h2>';
+    var c = countryOf(item.c), pos = rr.pos, ev0 = evOf(item), sec0 = isSecret(ev0);
+    var q = E.rerollQuote(item.d, pos), cur = item.d.charAt(pos);
+    var cuts = {}, p = 0; c.groups.slice(0, -1).forEach(function (n) { p += n; cuts[p] = true; });
+    var digits = item.d.split('').map(function (ch, i) {
+      return (cuts[i] ? '<span class="rr-sep">' + (c.sep === '-' ? '–' : '&nbsp;') + '</span>' : '') +
+        '<button type="button" class="rr-d mono' + (i === pos ? ' sel' : '') + '" data-rpos="' + i + '" aria-label="Цифра ' + (i + 1) + '"' + (rr.busy ? ' disabled' : '') + '>' + ch + '</button>';
+    }).join('');
+    var tiles = q.outcomes.map(function (o) {
+      var kind = o.digit === cur ? 'cur' : o.price > q.v0 ? 'up' : o.price < q.v0 ? 'down' : 'same';
+      var hidden = sec0 || o.tier === E.TIER_INDEX.secret;
+      var dl = kind === 'cur' ? 'сейчас' : kind === 'same' ? 'так же' : hidden ? (kind === 'up' ? '+???' : '−???') : (kind === 'up' ? '+' : '−') + compact(o.price - q.v0);
+      var hit = rr.last && !rr.busy && rr.last.digit === o.digit;
+      return '<div class="rr-o ' + kind + (hit ? ' hit' : '') + '"><b class="mono tc' + o.tier + '">' + o.digit + '</b><span class="dl">' + dl + '</span><span class="pp">' + pctLabel(o.p) + '</span></div>';
+    }).join('');
+    var w = function (x) { return (x * 100).toFixed(2) + '%'; };
+    return '<h2>Перекрутка цифры</h2>' +
+      '<div class="rr-num">' + digits + '</div>' +
+      '<div class="rr-price"><span>цена</span><b class="mono">' + esc(priceLabel(ev0)) + '</b>' + (rr.last && rr.last.was && !rr.busy ? '<span>было ' + esc(rr.last.was) + '</span>' : '') + '</div>' +
+      '<div class="rr-grid">' + tiles + '</div>' +
+      '<div class="rr-bar"><i class="u" style="width:' + w(q.pUp) + '"></i><i class="s" style="width:' + w(q.pSame) + '"></i><i class="d" style="width:' + w(q.pDown) + '"></i></div>' +
+      '<div class="rr-leg"><span><i class="u"></i>дороже <b>' + pctLabel(q.pUp) + '</b></span><span><i class="s"></i>так же <b>' + pctLabel(q.pSame) + '</b></span><span><i class="d"></i>дешевле <b>' + pctLabel(q.pDown) + '</b></span></div>' +
+      (rr.last && !rr.busy ? '<p class="rr-res ' + rr.last.kind + '">' + esc(rr.last.text) + '</p>' : '') +
+      '<button class="btn pri wide" type="button" id="rrTry"' + (rr.busy || S.balance < q.fee ? ' disabled' : '') + '>' +
+      (rr.busy ? 'Крутим…' : S.balance < q.fee ? 'Не хватает: нужно ' + money(q.fee) : (rr.last ? 'Ещё раз · ' : 'Крутить · ') + money(q.fee)) + '</button>' +
+      '<p class="note">Выбери любую цифру номера. Чем дороже вариант, тем реже он выпадает.</p>';
+  }
+  function openReroll(id, pos) { rr = { id: id, pos: pos, busy: false, last: null }; openSheet(rerollHtml()); }
+  function rerollOpen() { return open && !!$('sheetBody').querySelector('.rr-num'); }
+  function rerollRender() { if (rerollOpen()) $('sheetBody').innerHTML = rerollHtml(); }
   function rrTry() {
     var item = findItem(rr.id); if (!item || rr.pos === null || rr.busy) return;
     var q = E.rerollQuote(item.d, rr.pos);
     if (S.balance < q.fee) return;
-    var pos = rr.pos, d = Number(item.d.charAt(pos)), el = document.querySelector('.nd[data-pos="' + pos + '"]');
-    rr.busy = true; rr.last = null; rrRender(); audio();
+    var pos = rr.pos, d = Number(item.d.charAt(pos)), was = priceLabel(evOf(item)), wasSecret = isSecret(evOf(item));
+    rr.busy = true; rr.last = null; rerollRender(); audio();
+    var el = $('sheetBody').querySelector('.rr-d[data-rpos="' + pos + '"]'), stop = false, timer = 0, n = 0;
+    // цифра щёлкает сразу, пока сервер решает, что выпало
+    (function pre() { if (stop) return; d = (d + 1) % 10; if (el) flip(el, String(d), 55); if (n++ % 3 === 0) flapTick(); timer = setTimeout(pre, 55); })();
     run('reroll', { id: item.id, pos: pos }).then(function (res) {
+      stop = true; clearTimeout(timer);
       renderBalance(true);
-      var target = Number(res.digit), seq = [55, 55, 55, 55, 55, 55, 70, 90, 120, 160, 210];
-      var flips = 10 + ((((target - d - seq.length) % 10) + 10) % 10); // ≥ 1 полного круга
-      var plan = []; for (var k = 0; k < flips - seq.length; k++) plan.push(55); plan = plan.concat(seq);
-      var n = 0;
+      var target = Number(res.digit), seq = [60, 75, 95, 125, 165, 220];
+      var steps = seq.length + ((((target - d - seq.length) % 10) + 10) % 10);
+      var plan = []; for (var k = 0; k < steps - seq.length; k++) plan.push(55); plan = plan.concat(seq);
+      var i = 0;
       (function step() {
-        if (n >= plan.length) {
-          var x = findItem(res.id), ev1 = x ? evOf(x) : E.evaluate(res.digits);
-          rr.busy = false;
-          rr.last = res.outcome === 'up' ? { kind: 'up', text: 'Выпала ' + res.digit + ' — номер подорожал' + (isSecret(ev1) ? '!' : ' на ' + money(res.diff) + '!') }
-            : res.outcome === 'down' ? { kind: 'down', text: 'Выпала ' + res.digit + ' — номер подешевел на ' + money(-res.diff) + '.' }
-            : { kind: 'none', text: 'Выпала ' + res.digit + ' — цена не изменилась.' };
-          if (res.outcome === 'up') { buzz('win'); chime(Math.max(2, ev1.tier)); } else buzz(res.outcome === 'down' ? 'hard' : 'soft');
-          tick(true);
-          if (pages.length && pages[pages.length - 1].name === 'num') replacePage('num', res.id);
-          return;
-        }
+        if (i >= plan.length) return finish(res);
         d = (d + 1) % 10;
-        if (el) flip(el, String(d), Math.min(plan[n], 200));
-        if (n % 3 === 0) flapTick();
-        setTimeout(step, plan[n++]);
+        if (el) flip(el, String(d), Math.min(plan[i], 200));
+        if (i % 3 === 0) flapTick();
+        setTimeout(step, plan[i++]);
       })();
-    }, function (e) { rr.busy = false; rrRender(); showErr(e); });
+    }, function (e) { stop = true; clearTimeout(timer); rr.busy = false; rerollRender(); showErr(e); });
+    function finish(res) {
+      var x = findItem(res.id), ev1 = x ? evOf(x) : E.evaluate(res.digits);
+      rr.busy = false;
+      rr.last = { digit: res.digit, was: was,
+        kind: res.outcome === 'up' ? 'up' : res.outcome === 'down' ? 'down' : 'none',
+        text: res.outcome === 'up' ? 'Выпала ' + res.digit + ' — номер подорожал' + (isSecret(ev1) || wasSecret ? '!' : ' на ' + money(res.diff) + '!')
+          : res.outcome === 'down' ? 'Выпала ' + res.digit + ' — номер подешевел' + (wasSecret ? '.' : ' на ' + money(-res.diff) + '.')
+          : 'Выпала ' + res.digit + ' — цена не изменилась.' };
+      if (res.outcome === 'up') { buzz('win'); chime(Math.max(2, ev1.tier)); } else buzz(res.outcome === 'down' ? 'hard' : 'soft');
+      tick(true);
+      if (pages.length && pages[pages.length - 1].name === 'num') { var y = $('page').scrollTop; replacePage('num', res.id); $('page').scrollTop = y; }
+      if (rerollOpen()) rerollRender(); else toast(rr.last.text);
+    }
   }
 
   // ----- режим разработчика (только для юзернеймов из списка)
@@ -2140,7 +2380,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function playerRow(p) {
     var nm = p.username ? '@' + p.username : p.name || 'ID ' + p.id;
-    return '<button class="row" type="button" data-ptarget="' + p.id + '">' + avaHtml(p.username || p.name) + '<span class="t"><span class="mono">' + esc(nm) + '</span><small>ID ' + p.id + ' · ' + money(p.balance) + ' · ' + p.items + ' ' + plural(p.items, 'номер', 'номера', 'номеров') + '</small></span>' + CHEV + '</button>';
+    return '<button class="row" type="button" data-ptarget="' + p.id + '">' + playerAva(p.id, p.username || p.name) + '<span class="t"><span class="mono">' + esc(nm) + '</span><small>ID ' + p.id + ' · ' + money(p.balance) + ' · ' + p.items + ' ' + plural(p.items, 'номер', 'номера', 'номеров') + '</small></span>' + CHEV + '</button>';
   }
   function devPlayers() {
     var p = devTarget && !isSelf(devTarget) ? devTarget : selfSummary(), self = isSelf(p);
@@ -2343,12 +2583,20 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (top && top.name === 'top' && topView.by === by) { var y = $('page').scrollTop; replacePage('top'); $('page').scrollTop = y; }
     }, showErr);
   }
+  // Аватарка: фото профиля через сервер игры, пока не загрузилось (или его нет) — буква на цветном круге.
+  function playerAva(id, name, cls) {
+    var letter = String(name || '?').replace(/^@/, '').charAt(0).toUpperCase() || '?';
+    var color = SWATCHES[Math.abs(Number(id) || 0) % SWATCHES.length];
+    return '<span class="' + (cls || 'tava') + '" style="background:' + color + '">' + esc(letter) +
+      (SRV && id ? '<img src="api/avatar/' + Number(id) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
+  }
   function topRowHtml(p, rank, by, mine) {
     var place = rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank;
     var who = p.name || (p.username ? '@' + p.username : 'Игрок');
     var card = p.card && p.card.d ? '<small>' + (p.card.main ? MAINMARK + ' ' : '') + numColored(p.card, p.card.t) + '</small>' : '<small>склад пуст</small>';
     var v = by === 'worth' ? money(p.worth) : by === 'best' ? nf.format(p.best) + ' ' + plural(p.best, 'очко', 'очка', 'очков') : 'ур. ' + p.level;
-    return '<div class="row top-row' + (mine ? ' me' : '') + '"><span class="rank mono">' + place + '</span><span class="t"><span>' + esc(who) +
+    var tap = SRV && !mine && p.id;
+    return '<div class="row top-row' + (mine ? ' me' : '') + (tap ? ' tap" data-chat="' + Number(p.id) : '') + '"><span class="rank mono">' + place + '</span>' + playerAva(p.id, who) + '<span class="t"><span>' + esc(who) +
       (p.username && p.name ? ' <span class="un">@' + esc(p.username) + '</span>' : '') + '</span>' + card + '</span><span class="v mono">' + esc(v) + '</span></div>';
   }
   function topHtml() {
@@ -2361,10 +2609,113 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (r.me) html += '<div class="group-t">Твоё место</div><div class="group flat">' + topRowHtml(r.me, r.me.rank, by, true) + '</div>';
     html += '<div class="group-t">' + (SRV ? 'Лучшие · всего ' + nf.format(r.total) + ' ' + plural(r.total, 'игрок', 'игрока', 'игроков') : 'В демо в топе только ты') + '</div>' +
       '<div class="group flat">' + r.list.map(function (p, i) { return topRowHtml(p, i + 1, by, p.id === meId); }).join('') + '</div>';
-    html += '<p class="note">' + (S.main ? 'Рядом с именем — твой основной номер.' : 'Выбери основной номер на странице номера — его увидят все. Пока в топе твой лучший номер.') +
-      (by === 'worth' ? ' Коллекция — сколько стоит склад, без Secret.' : '') + '</p>';
+    html += '<p class="note">' + (SRV ? 'Нажми на игрока, чтобы написать ему. ' : '') + (S.main ? 'Рядом с именем — твой основной номер.' : 'Выбери основной номер на странице номера — его увидят все. Пока в топе твой лучший номер.') +
+      (by === 'worth' ? ' Коллекция — сколько стоит склад (засекреченные номера не считаются).' : '') + '</p>';
     return html;
   }
+
+  // ----- сообщения: список диалогов и чат с игроком
+  var chats = { list: null }, chat = { q: null, id: 0, who: null, list: [], more: false, sending: false };
+  function whenLabel(ts) {
+    var d = new Date(ts), k = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    return k === dayKey(0) ? hm(ts) : k === dayKey(-1) ? 'вчера' : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  }
+  function whoName(w) { return w ? (w.name || (w.username ? '@' + w.username : 'Игрок')) : 'Игрок'; }
+  function openChats() { chats.list = null; openPage('chats'); loadChats(); }
+  function loadChats() {
+    run('chats').then(function (r) {
+      chats.list = r.chats; setUnread(r.unread);
+      var top = pages[pages.length - 1];
+      if (top && top.name === 'chats') replacePage('chats');
+    }, showErr);
+  }
+  function chatsHtml() {
+    var html = pageHead('Сообщения', '<button class="sel-btn" type="button" id="chatNew">Написать</button>');
+    if (!chats.list) return html + '<div class="empty"><b>Загружаем…</b></div>';
+    if (!chats.list.length) return html + '<div class="empty"><b>Пока нет переписки</b><span>Напиши игроку из топа или по @username.</span><button class="btn pri" type="button" id="chatNew">Написать</button></div>';
+    return html + '<div class="group flat">' + chats.list.map(function (c) {
+      var name = whoName(c.who);
+      return '<button class="row cl-row" type="button" data-chat="' + Number(c.with) + '">' + playerAva(c.with, name) +
+        '<span class="t"><span>' + esc(name) + '</span><small>' + (c.last.mine ? 'Ты: ' : '') + esc(c.last.text) + '</small></span>' +
+        '<span class="cl-side"><span class="cl-time">' + whenLabel(c.last.ts) + '</span>' + (c.unread ? '<span class="badge">' + c.unread + '</span>' : '') + '</span></button>';
+    }).join('') + '</div>';
+  }
+  function openNewChat() {
+    openSheet('<h2>Новое сообщение</h2><input class="inp big" id="chatNewIn" placeholder="@username" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Кому написать">' +
+      '<p class="msg" id="chatNewMsg"></p><button class="btn pri wide" type="button" id="chatNewGo">Открыть чат</button>' +
+      '<p class="note">Написать можно игроку, который хотя бы раз открывал игру.</p>');
+    setTimeout(function () { var i = $('chatNewIn'); if (i) i.focus(); }, 350);
+  }
+  function openChat(q) {
+    if (!SRV) { toast('Сообщения работают в игре через Telegram'); return; }
+    chat = { q: q, id: /^\d+$/.test(String(q)) ? Number(q) : 0, who: null, list: [], more: false, sending: false, loaded: false };
+    openPage('chat', chat.id || q);
+    run('chat', { with: q }).then(function (r) {
+      chat.id = r.with.id; chat.who = r.with; chat.list = r.messages; chat.more = r.more; chat.loaded = true; setUnread(r.unread);
+      var top = pages[pages.length - 1];
+      if (top && top.name === 'chat') { top.arg = chat.id; replacePage('chat', chat.id); toBottom(); }
+    }, function (e) { goBack(); showErr(e); });
+  }
+  function chatListHtml() {
+    if (!chat.loaded) return '<div class="chat-empty">Загружаем…</div>';
+    var html = chat.more ? '<button class="chat-more" type="button" id="chatMore">Показать раньше</button>' : '', day = '';
+    if (!chat.list.length) return '<div class="chat-empty">Сообщений пока нет — напиши первым.</div>';
+    chat.list.forEach(function (m) {
+      var dl = dayLabel(m.ts);
+      if (dl !== day) { html += '<div class="chat-day">' + dl + '</div>'; day = dl; }
+      html += '<div class="bub' + (m.from === chat.id ? '' : ' me') + '">' + esc(m.text) + '<time>' + hm(m.ts) + '</time></div>';
+    });
+    return html;
+  }
+  function chatHtml() {
+    var w = chat.who, name = w ? whoName(w) : (chat.id ? 'Чат' : String(chat.q));
+    var title = (chat.id ? playerAva(chat.id, name) : '') + '<span class="nm">' + esc(name) + (w && w.username && w.name ? '<small>@' + esc(w.username) + '</small>' : '') + '</span>';
+    return '<div class="chat-page">' + pageHead(title).replace('class="ph"', 'class="ph chat-ph"') +
+      '<div class="chat-list" id="chatList">' + chatListHtml() + '</div>' +
+      '<div class="chat-bar"><textarea class="inp" id="chatIn" rows="1" maxlength="500" placeholder="Сообщение" aria-label="Сообщение"></textarea>' +
+      '<button class="send" type="button" id="chatSend" aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg></button></div></div>';
+  }
+  function atBottom() { var pg = $('page'); return pg.scrollHeight - pg.scrollTop - pg.clientHeight < 80; }
+  function toBottom() { var pg = $('page'); pg.scrollTop = pg.scrollHeight; }
+  function renderChatList(keepBottom) { var el = $('chatList'); if (!el) return; el.innerHTML = chatListHtml(); if (keepBottom) toBottom(); }
+  function sendChat() {
+    var inp = $('chatIn'), text = inp ? inp.value.trim() : '';
+    if (!text || chat.sending || !chat.id) return;
+    chat.sending = true; $('chatSend').disabled = true;
+    run('send', { to: chat.id, text: text }).then(function (r) {
+      chat.sending = false; $('chatSend').disabled = false;
+      inp.value = ''; inp.style.height = '';
+      if (!chat.list.some(function (m) { return m.id === r.msg.id; })) chat.list.push(r.msg);
+      renderChatList(true); buzz('sel');
+    }, function (e) { chat.sending = false; var b = $('chatSend'); if (b) b.disabled = false; showErr(e); });
+  }
+  function pollChat() {
+    var top = pages[pages.length - 1];
+    if (!SRV || offline || document.hidden || !top || top.name !== 'chat' || !chat.loaded || chat.sending) return;
+    var last = chat.list.length ? chat.list[chat.list.length - 1].id : 0;
+    run('chat', { with: chat.id, after: last }).then(function (r) {
+      setUnread(r.unread);
+      var add = r.messages.filter(function (m) { return !chat.list.some(function (x) { return x.id === m.id; }); });
+      if (!add.length) return;
+      var stick = atBottom(); chat.list = chat.list.concat(add); renderChatList(stick);
+      if (!stick) toast('💬 Новое сообщение');
+    }, function () {});
+  }
+  function loadOlder() {
+    if (!chat.list.length) return;
+    var pg = $('page'), h0 = pg.scrollHeight;
+    run('chat', { with: chat.id, before: chat.list[0].id }).then(function (r) {
+      chat.list = r.messages.concat(chat.list); chat.more = r.more; renderChatList(false);
+      pg.scrollTop = pg.scrollHeight - h0;
+    }, showErr);
+  }
+  setInterval(pollChat, 4000);
+  $('page').addEventListener('input', function (e) {
+    if (e.target.id === 'chatIn') { var t = e.target; t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; }
+  });
+  $('page').addEventListener('keydown', function (e) {
+    if (e.target.id === 'chatIn' && e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); sendChat(); }
+  });
 
   // промокоды: игрок вводит код в меню
   function openPromo() {
@@ -2829,7 +3180,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (!armed(el, 'Точно? +' + sumLabel(plist))) return;
       sellIds(ids, function (gotP, n) { stockView.picked = {}; stockView.select = false; toast('Продано ' + n + ' · +' + money(gotP)); replacePage('stock'); }); return;
     }
-    if ((el = t.closest('[data-pos]'))) { if (rr.busy) return; var np = Number(el.getAttribute('data-pos')); rr.pos = rr.pos === np ? null : np; rr.last = null; buzz('sel'); var y2 = $('page').scrollTop; replacePage('num', rr.id); $('page').scrollTop = y2; return; }
+    if ((el = t.closest('[data-pos]'))) { if (!rr.busy) { openReroll(pages[pages.length - 1].arg, Number(el.getAttribute('data-pos'))); buzz('sel'); } return; }
     if (t.closest('#rrTry')) { rrTry(); return; }
     if ((el = t.closest('#sellCommons'))) {
       var commons = S.items.filter(function (x) { return !x.lock && evOf(x).tier === 0; }).map(function (x) { return { item: x, ev: evOf(x) }; });
@@ -2851,6 +3202,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }
     if (t.closest('#shareBtn')) { var si = findItem(pages[pages.length - 1].arg); if (si) shareNum(si); return; }
     if (t.closest('#giftBtn')) { var gi = findItem(pages[pages.length - 1].arg); if (gi) openGift(gi); return; }
+    if ((el = t.closest('[data-chat]'))) { openChat(el.getAttribute('data-chat')); return; }
+    if (t.closest('#chatNew')) { openNewChat(); return; }
+    if (t.closest('#chatMore')) { loadOlder(); return; }
+    if (t.closest('#chatSend')) { sendChat(); return; }
     if ((el = t.closest('[data-topby]'))) { topView.by = el.getAttribute('data-topby'); replacePage('top'); loadTop(); buzz('sel'); return; }
     if (t.closest('#numUpg')) { var ui = pages[pages.length - 1].arg; if (upgOk(findItem(ui))) { upg.ids = [ui]; upg.last = null; openPage('upg'); } return; }
     if ((el = t.closest('[data-mult]'))) { if (upg.busy) return; upgSetMult(Number(el.getAttribute('data-mult'))); buzz('sel'); return; }
