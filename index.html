@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- копия telegram.org/js/telegram-web-app.js: telegram.org в России замедляют, а со своего сервера игра открывается сразу (обновить: npm run tg:update) -->
+<script src="js/telegram-web-app.js"></script>
 <title>Финансовый ход</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -450,6 +451,16 @@ button.pity { display: block; width: 100%; text-align: left; }
 .cap { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin: -6px 2px 14px; }
 .cap i { display: block; height: 100%; background: var(--accent); }
 .actions.three { grid-template-columns: 46px 1fr 1fr; }
+.nact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
+.nact .btn:first-child { grid-column: 1 / -1; }
+.nact .btn.on { background: color-mix(in srgb, #E3A400 18%, var(--bg-2)); color: #B98500; }
+.mainmark { color: #E3A400; font-size: 13px; line-height: 1; flex: none; }
+.top-row .rank { width: 30px; text-align: center; font-weight: 700; color: var(--hint); flex: none; font-size: 15px; }
+.top-row.me { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.top-row .un { color: var(--hint); font-weight: 400; font-size: 13px; }
+.top-row .t small .mono { font-size: 13px; }
+.gift-num { text-align: center; font-size: 18px; margin: 2px 0 12px; }
+#page .tabs { margin-bottom: 4px; }
 .btn.icon { display: grid; place-items: center; }
 .btn.icon .lock { color: inherit; width: 18px; height: 18px; }
 .btn.icon.on { background: var(--text); color: var(--bg); }
@@ -956,6 +967,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   var SRV = null, offline = '', booting = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
   // Адрес игры с сервером. Старая копия на GitHub Pages, открытая из Telegram, перекидывает сюда.
   var GAME_URL = 'https://fin-hod.online/';
+  // Ссылка на игру в Telegram — её отправляют друзьям вместе с номером.
+  var SHARE_URL = 'https://t.me/FinancoviHod_bot/play';
   function save() {
     try {
       if (SRV) localStorage.setItem(KEY + '-prefs', JSON.stringify(G.pick(S, PREF_KEYS)));
@@ -1034,7 +1047,9 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
           var q = String(args.q || '').toLowerCase().replace(/^@/, '');
           res = { players: !q || q === username() || q === tgUserId() ? [selfSummary()] : [], total: 1 };
         } else throw gameErr('Неизвестное действие.');
-      } else res = G.ops[op](S, S, args, ctx);
+      } else if (op === 'gift') throw gameErr('Дарить номера можно в игре через Telegram — в демо других игроков нет.');
+      else if (op === 'top') { var mt = topSelf(); res = { by: args.by, list: [mt], me: Object.assign({ rank: 1 }, mt), total: 1 }; }
+      else res = G.ops[op](S, S, args, ctx);
       save(); rebuildCountries();
       return Promise.resolve(res);
     } catch (e) { return Promise.reject(e); }
@@ -1393,6 +1408,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (done) done(r.total, r.n);
     }, showErr);
   }
+  function disarm(btn) { clearTimeout(btn._t); if (btn.classList.contains('confirm')) { btn.classList.remove('confirm'); btn.textContent = btn.dataset.label; } }
   function armed(btn, label, ms) {
     if (btn.classList.contains('confirm')) return true;
     btn.classList.add('confirm'); btn.dataset.label = btn.textContent; btn.textContent = label; buzz('sel');
@@ -1485,7 +1501,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   function ic(color, path) { return '<span class="ic" style="background:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg></span>'; }
   var CHEV = '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
-  var VERSION = '0.11';
+  var VERSION = '0.12';
 
   function openMenu() {
     if (busy || booting) return;
@@ -1496,6 +1512,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<span class="t">Награда дня<small>' + (st.available ? 'серия ' + st.streak + ' · ' + money(st.reward) : 'уже получена, приходи завтра') + '</small></span>' +
       (st.available ? '<span class="take">Забрать</span>' : '') + '</button>' +
       '<button class="row" type="button" id="stockRow">' + ic('#30B566', '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>') + '<span class="t">Склад<small>' + S.items.length + ' из ' + CAP + ' · продать, перекрутить цифру</small></span>' + CHEV + '</button>' +
+      '<button class="row" type="button" id="topRow">' + ic('#E3A400', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4"/>') + '<span class="t">Топ игроков<small>' + (SRV ? 'Чей склад дороже и номер круче' : 'В демо — только ты') + '</small></span>' + CHEV + '</button>' +
       '<button class="row" type="button" id="upgRow">' + ic('#E8384F', '<path d="M12 19V5M6 11l6-6 6 6"/>') + '<span class="t">Апгрейдер<small>Поставь номера — получи один дороже</small></span>' + CHEV + '</button>' +
       '<button class="row" type="button" id="buyersRow">' + ic('#00AFCA', '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.4 3-5 5.5-5s4.7 1.6 5.5 5M16 5.2a3.2 3.2 0 0 1 0 5.6M17.6 14.2c1.6.7 2.6 2.3 2.9 4.8"/>') + '<span class="t">Скупщики<small>' + buyersSub() + '</small></span>' + CHEV + '</button>' +
       '<button class="row" type="button" id="histRow">' + ic('#2D6BFF', '<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4M12 8v4l3 2"/>') + '<span class="t">История<small>Сколько потрачено и получено</small></span>' + CHEV + '</button>' +
@@ -1505,7 +1522,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     html += '<div class="group-t">Статистика</div><div class="group flat">' +
       '<div class="row"><span class="t">Выпущено</span><span class="v">' + nf.format(S.issued) + '</span></div>' +
       '<div class="row"><span class="t">У тебя номеров</span><span class="v">' + nf.format(S.items.length) + '</span></div>' +
-      '<div class="row"><span class="t">Лучший номер</span><span class="v mono">' + esc(best) + '</span></div></div>';
+      '<div class="row"><span class="t">Лучший номер</span><span class="v mono">' + esc(best) + '</span></div>' +
+      '<div class="row"><span class="t">Основной номер<small>Его видно в топе игроков</small></span><span class="v mono">' + (S.main && findItem(S.main) ? esc(fmtFull(findItem(S.main))) : 'не выбран') + '</span></div></div>';
     html += '<div class="group-t">Тема</div><div class="theme-pick">' + [['auto', tg ? 'Как в Telegram' : 'Как в системе'], ['light', 'Светлая'], ['dark', 'Тёмная']].map(function (t) {
       return '<button type="button" class="tp' + ((S.theme || 'auto') === t[0] ? ' on' : '') + '" data-theme-set="' + t[0] + '" aria-pressed="' + ((S.theme || 'auto') === t[0]) + '"><span class="tp-pv tp-' + t[0] + '"><i></i><i></i><b></b></span><span>' + t[1] + '</span></button>';
     }).join('') + '</div>';
@@ -1772,6 +1790,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (t.closest('#upgRow')) { closeSheet(); upg.last = null; openPage('upg'); return; }
     if (t.closest('#buyersRow')) { closeSheet(); openPage('buyers'); return; }
     if (t.closest('#histRow')) { closeSheet(); openPage('hist'); return; }
+    if (t.closest('#topRow')) { closeSheet(); openTop(); return; }
+    if ((el = t.closest('#giftGo'))) { sendGift(el); return; }
     if (t.closest('#promoRow')) { openPromo(); setTimeout(function () { var i = $('promoIn'); if (i) i.focus(); }, 350); return; }
     if (t.closest('#promoGo')) { redeem(); return; }
     if ((el = t.closest('[data-q]'))) { $('aAmt').value = el.getAttribute('data-q'); buzz('sel'); return; }
@@ -1862,7 +1882,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function renderPage(slide) {
     var top = pages[pages.length - 1], p = $('page');
     var html = top.name === 'stock' ? stockHtml() : top.name === 'num' ? numHtml(top.arg) : top.name === 'upg' ? upgHtml()
-      : top.name === 'buyers' ? buyersHtml() : top.name === 'hist' ? histHtml() : devHtml();
+      : top.name === 'buyers' ? buyersHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : devHtml();
     $('pageBody').innerHTML = html;
     if (p.hidden) { p.hidden = false; requestAnimationFrame(function () { p.classList.add('open'); }); }
     if (slide !== false) p.scrollTop = 0;
@@ -1873,6 +1893,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     return '<div class="ph"><button class="ghost round" type="button" data-back aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>' + title + '</h1>' + (right || '') + '</div>';
   }
   function numColored(item, t) { return '<span class="mono tc' + t + '">' + esc(fmtFull(item)) + '</span>'; }
+  var MAINMARK = '<span class="mainmark" aria-label="Основной номер">★</span>';
   var LOCK = '<svg class="lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 
   // ----- склад: список, плитки или карточки; режим «Выбрать» для продажи нескольких номеров
@@ -1888,7 +1909,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     return i > 0 ? [s.slice(0, i), s.slice(i + 1)] : [s, ''];
   }
   function itemHtml(m, view) {
-    var id = m.item.id, t = m.ev.tier, picked = stockView.picked[id], lock = m.item.lock ? LOCK : '';
+    var id = m.item.id, t = m.ev.tier, picked = stockView.picked[id], lock = (S.main === id ? MAINMARK : '') + (m.item.lock ? LOCK : '');
     var pick = stockView.select ? '<span class="pick' + (picked ? ' on' : '') + (m.item.lock ? ' off' : '') + '">' + (picked ? CHECK : '') + '</span>' : '';
     var attr = ' type="button" data-num="' + id + '"';
     if (view === 'tiles') {
@@ -1977,6 +1998,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<div class="nc-hint">' + (rr.pos === null ? 'Нажми на цифру, чтобы перекрутить её' : 'Перекручиваем ' + (rr.pos + 1) + '-ю цифру') + '</div></div>';
     html += '<div class="nprice"><span class="label">цена</span><span class="est">' + esc(priceLabel(ev)) + '</span><span class="meta">' + nf.format(ev.points) + ' ' + plural(ev.points, 'очко', 'очка', 'очков') + '</span></div>';
     if (rr.pos !== null) html += '<div class="rrbox" id="rrBox"></div>';
+    var isMain = S.main === item.id;
+    html += '<div class="nact"><button class="btn' + (isMain ? ' on' : '') + '" type="button" id="setMainBtn" aria-pressed="' + isMain + '">' + (isMain ? '★ Основной номер' : 'Сделать основным') + '</button>' +
+      '<button class="btn" type="button" id="shareBtn">Похвастаться</button>' +
+      '<button class="btn" type="button" id="giftBtn"' + (item.lock ? ' disabled' : '') + '>Подарить</button></div>';
     html += '<div class="group-t">Узоры</div><div class="group flat">';
     if (!ev.patterns.length) html += '<div class="row"><span class="t">Узоров нет<small>Попробуй перекрутить цифру</small></span></div>';
     ev.patterns.forEach(function (pt) { html += '<div class="row"><span class="t">' + esc(pt.name) + '<small>' + esc(pt.text) + '</small></span><span class="v mono">+' + nf.format(pt.points) + '</span></div>'; });
@@ -2261,6 +2286,86 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function resetProgress(done) {
     run('reset').then(function () { upg.ids = []; upg.last = null; current = null; batch = null; boot(); if (done) done(); }, showErr);
   }
+  // ----- похвастаться: номер и ссылка на игру — в любой чат Telegram
+  function shareNum(item) {
+    var ev = evOf(item), text = 'Мой номер ' + fmtFull(item) + ' — ' + TIER_NAMES[ev.tier] + (isSecret(ev) ? '' : ', ' + priceLabel(ev)) +
+      ' в «Финансовом ходе». Сможешь выбить круче?';
+    buzz('sel');
+    if (tg && tg.openTelegramLink) {
+      try { tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(SHARE_URL) + '&text=' + encodeURIComponent(text)); return; } catch (e) {}
+    }
+    if (navigator.share) { navigator.share({ text: text, url: SHARE_URL }).catch(function () {}); return; }
+    try { navigator.clipboard.writeText(text + ' ' + SHARE_URL).then(function () { toast('Скопировано — вставь в чат'); }, function () { toast(text); }); } catch (e) { toast(text); }
+  }
+
+  // ----- подарок: номер уходит другому игроку, бот присылает ему сообщение
+  function openGift(item) {
+    if (!SRV) { toast('Дарить номера можно в игре через Telegram'); return; }
+    if (item.lock) { toast('Закреплённый номер не подарить — сначала открепи его'); return; }
+    openSheet('<h2>Подарить номер</h2><p class="gift-num">' + numColored(item, evOf(item).tier) + '</p>' +
+      '<input class="inp big" id="giftTo" placeholder="@username" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Кому подарить">' +
+      '<p class="msg" id="giftMsg"></p><button class="btn pri wide" type="button" id="giftGo" data-id="' + esc(item.id) + '">Подарить</button>' +
+      '<p class="note">Получатель должен хотя бы раз открыть игру — бот пришлёт ему сообщение о подарке. До ' + G.GIFT_MAX + ' подарков в день, вернуть номер нельзя.</p>');
+  }
+  function sendGift(btn) {
+    var id = btn.getAttribute('data-id'), to = val('giftTo').trim().replace(/^@+/, '');
+    if (!to) { $('giftMsg').innerHTML = '<span class="err">Напиши, кому: @username или ID.</span>'; buzz('hard'); return; }
+    // подтверждение — только для того же получателя: сменил имя — подтверди заново
+    if (btn.dataset.to !== to) { disarm(btn); $('giftMsg').innerHTML = ''; }
+    btn.dataset.to = to;
+    if (!armed(btn, 'Точно подарить @' + to + '?')) return;
+    btn.disabled = true;
+    run('gift', { id: id, to: to }).then(function (r) {
+      closeSheet(); buzz('win'); topView.data = {};
+      toast('Номер подарен ' + r.to + (r.left ? ' · сегодня можно ещё ' + r.left : ''));
+      goBack(); if (pages.length) replacePage(pages[pages.length - 1].name, pages[pages.length - 1].arg);
+    }, function (e) {
+      btn.disabled = false; disarm(btn);
+      if (e && e.game) { $('giftMsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; buzz('hard'); } else showErr(e);
+    });
+  }
+
+  // ----- топ игроков: коллекция, лучший номер, уровень (с сервера; в демо — только ты)
+  var topView = { by: 'worth', data: {} };
+  var TOP_TABS = [['worth', 'Коллекция'], ['best', 'Лучший номер'], ['level', 'Уровень']];
+  function topSelf() {
+    var st = G.playerStats(S), me = SRV && SRV.me, u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    return { id: me ? me.id : 0, username: me ? me.username : username(), name: me ? me.name : (u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'Ты'),
+      worth: st.worth, best: st.best, level: st.level, card: st.card };
+  }
+  function openTop() { openPage('top'); loadTop(); }
+  function loadTop() {
+    var by = topView.by, d = topView.data[by];
+    if (d && Date.now() - d.at < 30000) return;
+    run('top', { by: by }).then(function (r) {
+      topView.data[by] = { r: r, at: Date.now() };
+      var top = pages[pages.length - 1];
+      if (top && top.name === 'top' && topView.by === by) { var y = $('page').scrollTop; replacePage('top'); $('page').scrollTop = y; }
+    }, showErr);
+  }
+  function topRowHtml(p, rank, by, mine) {
+    var place = rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank;
+    var who = p.name || (p.username ? '@' + p.username : 'Игрок');
+    var card = p.card && p.card.d ? '<small>' + (p.card.main ? MAINMARK + ' ' : '') + numColored(p.card, p.card.t) + '</small>' : '<small>склад пуст</small>';
+    var v = by === 'worth' ? money(p.worth) : by === 'best' ? nf.format(p.best) + ' ' + plural(p.best, 'очко', 'очка', 'очков') : 'ур. ' + p.level;
+    return '<div class="row top-row' + (mine ? ' me' : '') + '"><span class="rank mono">' + place + '</span><span class="t"><span>' + esc(who) +
+      (p.username && p.name ? ' <span class="un">@' + esc(p.username) + '</span>' : '') + '</span>' + card + '</span><span class="v mono">' + esc(v) + '</span></div>';
+  }
+  function topHtml() {
+    var by = topView.by, d = topView.data[by];
+    var html = pageHead('Топ игроков') + '<div class="tabs" role="tablist">' + TOP_TABS.map(function (t) {
+      return '<button type="button" role="tab" data-topby="' + t[0] + '" aria-selected="' + (by === t[0]) + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+    if (!d) return html + '<div class="empty"><b>Загружаем топ…</b></div>';
+    var r = d.r, meId = r.me && r.me.id;
+    if (r.me) html += '<div class="group-t">Твоё место</div><div class="group flat">' + topRowHtml(r.me, r.me.rank, by, true) + '</div>';
+    html += '<div class="group-t">' + (SRV ? 'Лучшие · всего ' + nf.format(r.total) + ' ' + plural(r.total, 'игрок', 'игрока', 'игроков') : 'В демо в топе только ты') + '</div>' +
+      '<div class="group flat">' + r.list.map(function (p, i) { return topRowHtml(p, i + 1, by, p.id === meId); }).join('') + '</div>';
+    html += '<p class="note">' + (S.main ? 'Рядом с именем — твой основной номер.' : 'Выбери основной номер на странице номера — его увидят все. Пока в топе твой лучший номер.') +
+      (by === 'worth' ? ' Коллекция — сколько стоит склад, без Secret.' : '') + '</p>';
+    return html;
+  }
+
   // промокоды: игрок вводит код в меню
   function openPromo() {
     openSheet('<h2>Промокод</h2><input class="inp big mono" id="promoIn" maxlength="16" placeholder="КОД" autocomplete="off" aria-label="Промокод">' +
@@ -2290,7 +2395,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   // ----- история: сколько потрачено, на что и сколько получено
   var LOG_KINDS = {
     issue: ['Выпуск номеров', '#30B566'], reroll: ['Перекрутка цифр', '#6B57FF'], sell: ['Продажа номеров', '#2D6BFF'],
-    buyer: ['Скупщики', '#00AFCA'], upgrade: ['Апгрейдер', '#E8384F'], bonus: ['Награды и подработка', '#F2A30F'], dev: ['Выдано разработчиком', '#8A9096']
+    buyer: ['Скупщики', '#00AFCA'], upgrade: ['Апгрейдер', '#E8384F'], bonus: ['Награды и подработка', '#F2A30F'], gift: ['Подарки', '#E8507A'], dev: ['Выдано разработчиком', '#8A9096']
   };
   function dayLabel(ts) {
     var d = new Date(ts), k = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -2736,6 +2841,17 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (it) run('lock', { id: it.id, on: !it.lock }).then(function (r) { buzz('sel'); replacePage('num', it.id); toast(r.lock ? 'Закреплён: не продаётся и не идёт в апгрейд' : 'Откреплён'); }, showErr);
       return;
     }
+    if (t.closest('#setMainBtn')) {
+      var mi = findItem(pages[pages.length - 1].arg); if (!mi) return;
+      run('setMain', { id: S.main === mi.id ? null : mi.id }).then(function (r) {
+        buzz('sel'); topView.data = {}; replacePage('num', mi.id);
+        toast(r.main ? 'Теперь это твой основной номер — его видно в топе' : 'Основной номер убран');
+      }, showErr);
+      return;
+    }
+    if (t.closest('#shareBtn')) { var si = findItem(pages[pages.length - 1].arg); if (si) shareNum(si); return; }
+    if (t.closest('#giftBtn')) { var gi = findItem(pages[pages.length - 1].arg); if (gi) openGift(gi); return; }
+    if ((el = t.closest('[data-topby]'))) { topView.by = el.getAttribute('data-topby'); replacePage('top'); loadTop(); buzz('sel'); return; }
     if (t.closest('#numUpg')) { var ui = pages[pages.length - 1].arg; if (upgOk(findItem(ui))) { upg.ids = [ui]; upg.last = null; openPage('upg'); } return; }
     if ((el = t.closest('[data-mult]'))) { if (upg.busy) return; upgSetMult(Number(el.getAttribute('data-mult'))); buzz('sel'); return; }
     if (t.closest('#upgHelp')) { openUpgHelp(); return; }

@@ -22,6 +22,7 @@
   var MULTS = [1.5, 2, 3, 5, 10, 20];     // множители апгрейдера
   var STAKE_MAX = 10;
   var LOG_MAX = 300, ADMIN_LOG_MAX = 200, HIST_MAX = 20;
+  var GIFT_MAX = 10;                      // сколько номеров можно подарить за день
 
   /*
    * Страны — настоящие коды, операторы и их коды — выдуманные.
@@ -72,7 +73,7 @@
   function freshPlayer() {
     return { v: 5, balance: E.CONFIG.startBalance, level: 1, xp: 0, pity: {}, items: [], last: null,
       daily: { last: null, streak: 0 }, jobAt: 0, issued: 0, best: null, log: [], tot: {},
-      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null };
+      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null, main: null, gifts: null };
   }
   function freshWorld() {
     return { event: null, notice: null, holiday: 'none', promos: [], custom: { regions: [], ops: {}, admins: [] },
@@ -140,6 +141,7 @@
     var gone = [];
     P.items = P.items.filter(function (x) { if (set[x.id]) { gone.push(x); return false; } return true; });
     if (P.last && set[P.last]) P.last = null;
+    if (P.main && set[P.main]) P.main = null;
     return gone;
   }
 
@@ -390,12 +392,55 @@
     return { kind: 'tier', item: it.id };
   };
 
+  // Основной номер — показывается в топе игроков. a = { id } (без id — убрать).
+  OPS.setMain = function (P, W, a) {
+    if (!a.id) { P.main = null; return { main: null }; }
+    if (!findItem(P, a.id)) fail('Номер не найден.');
+    P.main = a.id;
+    return { main: a.id };
+  };
+
   // Начать заново: всё по игроку с нуля (настройки мира и интерфейса не трогаем).
   OPS.reset = function (P) {
     var f = freshPlayer();
     PLAYER_KEYS.forEach(function (k) { P[k] = f[k]; });
     return {};
   };
+
+  /* ================= подарок: номер переходит от P к TP ================= */
+  // a = { id }, ctx = { now, from, to } — имена для истории. Получателя находит сервер.
+  function gift(P, TP, W, a, ctx) {
+    var now = nowOf(ctx), x = findItem(P, a.id), cs = countries(W), day = dayKey(now, 0);
+    if (!x) fail('Номер не найден.');
+    if (x.lock) fail('Закреплённый номер не передать — сначала открепи его.');
+    if (freeSlots(TP) <= 0) fail('У получателя полный склад.');
+    if (!P.gifts || P.gifts.day !== day) P.gifts = { day: day, n: 0 };
+    if (P.gifts.n >= GIFT_MAX) fail('Сегодня уже подарено ' + GIFT_MAX + ' номеров — приходи завтра.');
+    var set = {}; set[x.id] = true;
+    removeItems(P, set);
+    P.gifts.n++;
+    x.h = (x.h || []).concat([{ t: now, x: 'Подарок от ' + ctx.from + ' для ' + ctx.to }]).slice(-HIST_MAX);
+    TP.items.unshift(x); noteBest(TP, x);
+    var num = fmtFull(x, cs);
+    logMoney(P, 'gift', 0, 'Подарок ' + ctx.to + ': ' + num, null, now);
+    logMoney(TP, 'gift', 0, 'Подарок от ' + ctx.from + ': ' + num, null, now);
+    return { id: x.id, num: num, tier: evaluate(x.d).tier, left: GIFT_MAX - P.gifts.n };
+  }
+
+  /* ================= сводка игрока для топа ================= */
+  // worth — склад по цене продажи (без Secret), best — очки лучшего номера на складе,
+  // card — номер для показа в топе: основной, а если его нет — лучший.
+  function playerStats(P) {
+    var worth = 0, best = null, bestP = -1, secret = 0, main = P.main ? findItem(P, P.main) : null;
+    P.items.forEach(function (x) {
+      var ev = evaluate(x.d);
+      if (isSecretTier(ev.tier)) secret++; else worth += E.marketPrice(ev);
+      if (ev.points > bestP) { bestP = ev.points; best = x; }
+    });
+    var show = main || best;
+    return { worth: worth, best: Math.max(0, bestP), level: P.level, secret: secret, items: P.items.length,
+      card: show ? { d: show.d, c: show.c, net: show.net, t: evaluate(show.d).tier, main: !!main } : null };
+  }
 
   /* ================= действия администратора над игроком ================= */
   var TIER_NAMES = E.TIERS.map(function (t) { return t.name; });
@@ -517,6 +562,6 @@
     eventNow: eventNow, eventTitle: eventTitle, costOf: costOf, noticeNow: noticeNow, dailyStatus: dailyStatus,
     buyersFor: buyersFor, buyersToday: buyersToday, buyerState: buyerState, buyerAccepts: buyerAccepts, buyerPrice: buyerPrice,
     upgChance: upgChance, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
-    ops: OPS, adminAct: adminAct, worldOp: worldOp
+    ops: OPS, adminAct: adminAct, worldOp: worldOp, gift: gift, GIFT_MAX: GIFT_MAX, playerStats: playerStats
   };
 });
