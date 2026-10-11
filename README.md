@@ -2,6 +2,8 @@
 
 Telegram Mini App (демо): выпускай игровые номера и лови красивые комбинации цифр.
 
-Играть: https://zxyqik.github.io/ — лучше всего внутри Telegram.
+Играть в Telegram: https://t.me/FinancoviHod_bot/play
+
+В браузере: https://zxyqik.github.io/
 
 Номера выдуманные: код оператора начинается с 0, позвонить по ним нельзя.
