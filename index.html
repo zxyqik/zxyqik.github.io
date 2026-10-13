@@ -62,7 +62,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
 
 .app {
   height: 100%; max-width: 460px; margin: 0 auto;
-  padding-inline: 16px; padding-block: calc(10px + var(--tg-content-safe-area-inset-top, 0px)) 12px;
+  padding-inline: 16px; padding-block: calc(10px + var(--tg-content-safe-area-inset-top, 0px)) calc(12px + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px)));
   display: flex; flex-direction: column;
 }
 
@@ -209,7 +209,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
 .qty button:disabled { opacity: .35; cursor: default; }
 .pity { color: var(--hint); font-size: 12px; margin: 10px 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pity .mono { color: var(--text); font-size: 11.5px; }
+/* главная кнопка — со срезанным углом, как у SIM-карты */
 .main-btn {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.12);
   width: 100%; height: 54px; border-radius: 14px; background: var(--accent); color: var(--accent-ink);
   font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px;
   transition: transform .15s, opacity .2s, background-color .2s;
@@ -220,8 +223,6 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
 .main-btn.alt { background: var(--bg-2); color: var(--text); }
 .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: rot .7s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
-.in-tg .main-btn { display: none; }
-.in-tg .pity { margin-bottom: 0; }
 
 /* ---------- шторка ---------- */
 .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.4); opacity: 0; transition: opacity .25s; }
@@ -476,24 +477,74 @@ button.pity { display: block; width: 100%; text-align: left; }
 .tava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .top-row .rank { width: 26px; }
 .top-row.tap { cursor: pointer; }
-/* меню плитками */
-.mgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.mtile { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 2px 10px; border-radius: 18px; background: var(--bg-2); font-size: 12.5px; font-weight: 600; min-width: 0; }
-.mtile > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mt-ic { position: relative; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: var(--c);
-  background: color-mix(in srgb, var(--c) 20%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent); }
-.mt-ic svg { width: 22px; height: 22px; }
-.mt-badge { position: absolute; top: -6px; right: -8px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-style: normal; font-size: 11.5px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg-2); }
-.mwide { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.mcard { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 18px; background: var(--bg-2); text-align: left; min-width: 0; }
-.mcard .t { display: flex; flex-direction: column; min-width: 0; }
-.mcard .t b { font-size: 15px; } .mcard .t small { color: var(--hint); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mcard .mc-ava, .mcard .mc-ic { position: relative; width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; overflow: hidden; }
-.mcard .mc-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.mcard .mc-ic { border-radius: 12px; color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, var(--bg)); }
-.mcard .mc-ic svg { width: 21px; height: 21px; }
-.mcard.gold { background: color-mix(in srgb, #E3A400 14%, var(--bg-2)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #E3A400 55%, transparent); }
-.mcard.gold .mc-ic { color: #C98A00; background: color-mix(in srgb, #E3A400 22%, var(--bg)); }
+/* меню: пропуск игрока */
+.pass { position: relative; width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; padding: 14px 14px 12px; text-align: left;
+  border-radius: 18px; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, var(--bg-2)) 0%, var(--bg-2) 62%); }
+.pass::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--accent) 7%, transparent) 10px 11px);
+  -webkit-mask: linear-gradient(90deg, transparent 40%, #000); mask: linear-gradient(90deg, transparent 40%, #000); }
+.pass-ava { position: relative; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 19px; overflow: hidden;
+  box-shadow: 0 0 0 2px var(--bg-2), 0 0 0 3.5px var(--accent); }
+.pass-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pass-t { display: flex; flex-direction: column; min-width: 0; }
+.pass-t b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pass-t small { color: var(--hint); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pass .chev { color: var(--hint); }
+.pass-kpi { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; padding-top: 10px; border-top: .5px dashed var(--line); }
+.pass-kpi span { display: flex; flex-direction: column; min-width: 0; }
+.pass-kpi b { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pass-kpi small { color: var(--hint); font-size: 12px; }
+/* награда дня: календарь на неделю */
+.daily { margin-top: 10px; padding: 12px; border-radius: 18px; background: var(--bg-2); }
+.daily .dh { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 2px 10px; }
+.daily .dh b { font-size: 15px; } .daily .dh span { color: var(--hint); font-size: 12.5px; }
+.dcal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.dc { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 11px; background: var(--bg); }
+.dc small { font-size: 9.5px; color: var(--hint); white-space: nowrap; }
+.dc b { font-size: 12.5px; font-weight: 700; }
+.dc svg { position: absolute; top: -4px; right: -3px; width: 15px; height: 15px; padding: 2px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+.dc.done { opacity: .55; }
+.dc.today { background: color-mix(in srgb, #E3A400 18%, var(--bg)); box-shadow: inset 0 0 0 1.5px #E3A400; opacity: 1; }
+.dc.today small { color: #C98A00; font-weight: 700; }
+:root[data-theme="dark"] .dc.today small { color: #F2BE3A; }
+.daily .btn { width: 100%; margin-top: 10px; height: 44px; }
+.dnote { margin: 10px 2px 0; color: var(--hint); font-size: 12.5px; line-height: 1.35; }
+/* разделы: карточки с цветной меткой и срезанным углом */
+.secs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.sec { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left;
+  min-height: 60px; padding: 10px 12px 10px 14px; border-radius: 14px; background: var(--bg-2); min-width: 0;
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 0 100%); transition: transform .15s; }
+.sec:active { transform: scale(.97); }
+.sec::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--c); }
+.sec-ic { grid-row: 1 / 3; width: 22px; height: 22px; color: var(--c); }
+.sec b { font-size: 14.5px; font-weight: 650; align-self: end; }
+.sec small { color: var(--hint); font-size: 12px; align-self: start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sec-badge { position: absolute; top: 8px; right: 16px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-style: normal; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
+.sec.gold { background: color-mix(in srgb, #E3A400 13%, var(--bg-2)); }
+.ev-row { margin-top: 10px; }
+/* достижения */
+.ach-sum { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 4px 10px; padding: 14px; border-radius: 16px; background: var(--bg-2); margin-bottom: 10px; }
+.ach-sum b { font-size: 24px; } .ach-sum > span:not(.ach-bar) { color: var(--hint); font-size: 13px; }
+.ach-sum .ach-bar { grid-column: 1 / -1; }
+.ach-bar { display: block; height: 5px; border-radius: 5px; background: var(--line); overflow: hidden; margin-top: 6px; }
+.ach-bar i { display: block; height: 100%; background: var(--accent); border-radius: 5px; }
+.ach { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--bg-2); margin-bottom: 8px; }
+.ach .t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ach .t b { font-size: 15px; } .ach .t small { color: var(--hint); font-size: 12.5px; }
+.ach-ic { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; color: var(--hint); background: var(--bg); }
+.ach-ic svg { width: 22px; height: 22px; }
+.ach.ready .ach-ic, .ach.got .ach-ic { color: #fff; background: linear-gradient(150deg, #F2BE3A, #C98A00); }
+.ach.ready { box-shadow: inset 0 0 0 1.5px #E3A400; }
+.ach.got { opacity: .7; }
+.ach .btn { height: 36px; padding: 0 14px; font-size: 14px; flex: none; }
+.ach-v { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.ach-v b { font-size: 13px; } .ach-v small { color: var(--hint); font-size: 11.5px; }
+.ach-ok { color: var(--accent); font-size: 13px; font-weight: 650; flex: none; }
+.prof-ach { margin-top: 10px; }
+.ach-dots { display: flex; gap: 3px; margin-right: 4px; }
+.ach-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.ach-dots i.on { background: #E3A400; }
 .wrow .wv { color: #C98A00; font-weight: 650; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .wrow .wv::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
 :root[data-theme="dark"] .wrow .wv { color: #F2BE3A; }
@@ -620,10 +671,14 @@ html:root[data-holiday="valentine"] { --accent: #F0457E; --accent-ink: #FFFFFF; 
 /* ---------- v9: название игры, логотипы, праздничный декор ---------- */
 .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
 .me-btn { position: relative; flex: none; padding: 0; border-radius: 50%; }
-.brand-mark { position: relative; width: 36px; height: 36px; flex: none; display: block; }
-.brand-mark .logo { width: 36px; height: 36px; border-radius: 50%; }
-.brand-mark .me-ava { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; overflow: hidden; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px color-mix(in srgb, var(--accent) 70%, transparent); }
-.brand-mark .me-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* кольцо вокруг аватарки — прогресс уровня */
+.me-ring { --p: 0; width: 40px; height: 40px; border-radius: 50%; padding: 2.5px; display: block;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--line) 0); transition: --p .6s; }
+.me-ava { position: relative; width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; overflow: hidden; box-shadow: 0 0 0 2px var(--bg); }
+.me-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.me-lv { position: absolute; right: -5px; bottom: -3px; min-width: 18px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: var(--accent-ink);
+  font-size: 10px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg); }
+.lvl-pill .xp { display: none; }
 .lvl-pill { display: inline-flex; align-items: center; gap: 6px; color: var(--hint); font-size: 12px; line-height: 1; }
 .lvl-pill .xp { width: 46px; height: 4px; }
 .brand-tx { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -671,7 +726,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 @media (prefers-reduced-motion: reduce) { #garland .bulb, .hat-valentine, .hearts { animation: none; } }
 .wallet .mono { font-size: clamp(14px, 4.4vw, 17px); }
 .brand-tx { font-size: clamp(14px, 4.2vw, 16px); }
-@media (max-width: 370px) { .top { gap: 6px; } .brand-mark, .brand-mark .logo { width: 32px; height: 32px; } }
+@media (max-width: 370px) { .top { gap: 6px; } .me-ring { width: 36px; height: 36px; } }
 .ops .logo.sm { width: 17px; height: 17px; }
 
 /* ---------- v10: апгрейдер ---------- */
@@ -883,7 +938,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 8h14M5 16h14"/></svg>
       <span class="dot" id="menuDot" hidden></span>
     </button>
-    <button class="me-btn" id="meBtn" type="button" aria-label="Профиль"><span class="brand-mark" id="brandMark"></span></button>
+    <button class="me-btn" id="meBtn" type="button" aria-label="Профиль"><span class="me-ring" id="meRing"><span class="me-ava" id="meAva"></span></span><span class="me-lv mono" id="meLv">1</span><span class="hat" id="hat"></span></button>
     <div class="brand"><b class="brand-tx">Финансовый <span>ход</span></b><span class="lvl-pill"><span id="lvl">ур. 1</span><span class="xp"><i id="xpbar"></i></span></span></div>
     <div class="wallet" id="wallet">
       <span class="mono" id="bal">1 000 ₽</span>
@@ -1285,14 +1340,18 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     booting = true; renderMain();
     loadState().then(afterConnect);
   }
-  // Кружок профиля в шапке: фото из Telegram (или буква имени), сверху — праздничная шапка.
+  // Своё фото из данных запуска Telegram — оно есть сразу, без запроса к серверу.
+  function myPhoto() {
+    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    return u && /^https:\/\/t\.me\/i\/userpic\//.test(u.photo_url || '') ? u.photo_url : '';
+  }
+  // Кружок профиля в шапке: фото из Telegram (или буква имени на цветном круге).
   function loadAvatar() {
-    if (!SRV || !SRV.me) return;
-    var bm = $('brandMark'), old = bm.querySelector('.me-ava');
-    if (old) old.remove();
-    var tmp = document.createElement('span');
-    tmp.innerHTML = playerAva(SRV.me.id, SRV.me.name || SRV.me.username, 'me-ava');
-    bm.insertBefore(tmp.firstChild, bm.querySelector('.hat'));
+    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user, me = SRV && SRV.me;
+    var id = me ? me.id : (u ? u.id : 0), name = me ? (me.name || me.username) : (u ? u.first_name : (S.previewUser || 'Ты'));
+    var a = $('meAva'), tmp = document.createElement('span');
+    tmp.innerHTML = playerAva(id, name, 'x');
+    a.style.background = tmp.firstChild.style.background; a.innerHTML = tmp.firstChild.innerHTML;
   }
   function afterConnect(ok) {
     booting = false;
@@ -1355,7 +1414,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       tg.onEvent('themeChanged', function () { applyTheme(); renderMain(); });
       tg.onEvent('activated', function () { syncTick(); });
-      tg.MainButton.onClick(function () { onMain(); });
+      // кнопка Telegram не нужна: своя кнопка на странице работает на любой версии Telegram
+      tg.MainButton.hide();
       tg.BackButton.onClick(function () { goBack(); });
       if (tg.SettingsButton) { tg.SettingsButton.show(); tg.SettingsButton.onClick(function () { openMenu(); }); }
     } catch (e) {}
@@ -1423,7 +1483,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     } else el.textContent = money(S.balance);
     shown = S.balance;
   }
-  function renderLevel() { $('lvl').textContent = 'ур. ' + S.level; $('xpbar').style.width = Math.min(100, S.xp / E.xpToNext(S.level) * 100) + '%'; }
+  function renderLevel() {
+    var pct = Math.min(100, S.xp / E.xpToNext(S.level) * 100);
+    $('lvl').textContent = 'ур. ' + S.level; $('xpbar').style.width = pct + '%';
+    $('meRing').style.setProperty('--p', pct.toFixed(1)); $('meLv').textContent = S.level;
+  }
   function renderPity() {
     $('pity').innerHTML = '<span class="odds-chip">Шансы %</span>Гарант через' + E.pityLeft(S.pity).map(function (x) { return '<span class="td tc' + x.tier + '"><i></i>' + x.left + '</span>'; }).join('');
   }
@@ -1433,7 +1497,15 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     $('countryFlag').innerHTML = flagSvg(c.key);
     $('countryTx').textContent = '+' + c.code + ' ' + c.name;
   }
-  function renderDot() { $('menuDot').hidden = !(dailyStatus().available || unread > 0); }
+  function renderDot() { $('menuDot').hidden = !(dailyStatus().available || unread > 0 || G.achReady(S) > 0); checkAch(); }
+  // Новое выполненное достижение — короткое сообщение (не во время выпуска, чтобы не мешать).
+  var achKnown = null;
+  function checkAch() {
+    if (booting || busy) return;
+    var ready = G.achList(S).filter(function (a) { return a.done && !a.claimed; });
+    if (achKnown) { var fresh = ready.filter(function (a) { return achKnown.indexOf(a.id) < 0; })[0]; if (fresh) toast('Достижение «' + fresh.title + '» · награда в меню'); }
+    achKnown = ready.map(function (a) { return a.id; });
+  }
 
   /* ---------------- табло: цифры перелистываются, как на вокзальном табло ---------------- */
   var reels = [];
@@ -1768,12 +1840,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     b.disabled = !enabled; b.classList.toggle('alt', alt);
     $('mainTx').textContent = text;
     $('stockTx').textContent = S.items.length + '/' + CAP; $('stockChip').classList.toggle('full', S.items.length >= CAP);
-    if (tg) {
-      try {
-        tg.MainButton.setParams({ text: text, is_visible: !pages.length, is_active: enabled, color: cssVar(alt ? '--bg-2' : '--accent'), text_color: cssVar(alt ? '--text' : '--accent-ink') });
-        tg.MainButton.hideProgress();
-      } catch (e) {}
-    }
+    renderDot();
   }
   setInterval(function () { if (!busy && !affordable(1)) renderMain(); }, 1000);
   setInterval(function () { if (!busy) { renderPills(); renderMain(); } }, 20000);
@@ -1803,45 +1870,60 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   function ic(color, path) { return '<span class="ic" style="background:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg></span>'; }
   var CHEV = '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
-  var VERSION = '0.13';
+  var VERSION = '0.14';
 
+  var MEDAL = '<circle cx="12" cy="14.5" r="5.5"/><path d="M8.6 10.2L6 3.5h4l2 4.5 2-4.5h4l-2.6 6.7M12 12.3v4.4"/>';
+  // короткая сумма для клеток календаря: 3к, 3,5к, 50к, 1,2 млн
+  function shortK(n) { return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '').replace('.', ',') + 'м' : n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '').replace('.', ',') + 'к' : String(n); }
+  // Награда дня: семь дней вперёд, видно, сколько дадут завтра и послезавтра.
+  function dailyHtml() {
+    var st = dailyStatus(), cur = st.available ? st.streak : S.daily.streak, start = Math.max(1, cur - 6), max = E.CONFIG.daily.maxStreak;
+    var cells = '';
+    for (var i = 0; i < 7; i++) {
+      var n = start + i, cls = n < cur || (n === cur && !st.available) ? 'done' : n === cur ? 'today' : 'later';
+      cells += '<span class="dc ' + cls + '"><small>' + (n === cur ? 'сегодня' : 'день ' + n) + '</small><b class="mono">' + shortK(E.dailyReward(n)) + '</b>' +
+        (cls === 'done' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</span>';
+    }
+    return '<div class="daily"><div class="dh"><b>Награда дня</b><span>серия ' + cur + ' ' + plural(cur, 'день', 'дня', 'дней') + (cur >= max ? ' · максимум' : '') + '</span></div>' +
+      '<div class="dcal">' + cells + '</div>' +
+      (st.available ? '<button class="btn pri" type="button" id="dailyGo">Забрать ' + money(st.reward) + '</button>'
+        : '<p class="dnote">Завтра — ' + money(E.dailyReward(cur + 1)) + '. Пропустишь день — серия начнётся заново.</p>') + '</div>';
+  }
   function openMenu() {
     if (busy || booting) return;
     if (offline) { toast(offline); return; }
-    var st = dailyStatus();
-    // плитки разделов — как в приложениях: иконка в цветном квадрате и подпись
-    var tile = function (id, color, label, path, badge) {
-      return '<button class="mtile" type="button" id="' + id + '"><span class="mt-ic" style="--c:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>' +
-        (badge ? '<i class="mt-badge">' + badge + '</i>' : '') + '</span><span>' + label + '</span></button>';
+    var html = '';
+    // пропуск игрока: аватарка, имя, деньги — по нажатию профиль
+    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user, me = SRV && SRV.me, st0 = G.playerStats(S);
+    var meName = me ? (me.name || '@' + me.username) : (u ? u.first_name : 'Мой профиль'), meUser = me ? me.username : username();
+    html += '<button class="pass" type="button" id="profileRow">' + playerAva(me ? me.id : (u ? u.id : 0), meName, 'pass-ava') +
+      '<span class="pass-t"><b>' + esc(meName) + '</b><small>' + (meUser ? '@' + esc(meUser) + ' · ' : '') + 'уровень ' + S.level + '</small></span>' + CHEV +
+      '<span class="pass-kpi"><span><b class="mono">' + esc(compact(S.balance)) + '</b><small>баланс</small></span>' +
+      '<span><b class="mono">' + esc(compact(st0.worth)) + '</b><small>склад</small></span>' +
+      '<span><b class="mono">' + nf.format(S.items.length) + '</b><small>' + plural(S.items.length, 'номер', 'номера', 'номеров') + '</small></span></span></button>';
+    html += dailyHtml();
+    // разделы: цветная метка слева, срезанный угол, живая подпись
+    var sec = function (id, color, label, meta, path, badge) {
+      return '<button class="sec" type="button" id="' + id + '" style="--c:' + color + '"><svg class="sec-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>' +
+        '<b>' + label + '</b><small>' + meta + '</small>' + (badge ? '<i class="sec-badge mono">' + badge + '</i>' : '') + '</button>';
     };
-    var html = '<div class="mgrid">' +
-      tile('stockRow', '#30B566', 'Склад', '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>') +
-      tile('upgRow', '#E8384F', 'Апгрейдер', '<path d="M12 19V5M6 11l6-6 6 6"/>') +
-      tile('buyersRow', '#00AFCA', 'Скупщики', '<path d="M4 9.5l1.6-4.5h12.8L20 9.5M4 9.5h16M4 9.5v9h16v-9M9.5 13.5h5"/>') +
-      tile('topRow', '#E3A400', 'Топ', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4"/>') +
-      tile('chatsRow', '#2D6BFF', 'Сообщения', '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17H10l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5z"/>', unread > 0 ? unread : '') +
-      tile('oddsRow', '#1D6FD0', 'Шансы', '<circle cx="8" cy="8" r="2.4"/><circle cx="16" cy="16" r="2.4"/><path d="M18 6L6 18"/>') +
-      tile('promoRow', '#8A5CF5', 'Промокод', '<path d="M4 8.5a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v7a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2zM10 9.5l4 5M10.2 14.6h.01M13.8 9.4h.01"/>') +
-      tile('histRow', '#6B7A8F', 'История', '<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4M12 8v4l3 2"/>') +
-      '</div>';
-    // широкие карточки: профиль и (для разработчиков) режим разработчика
-    var meName = SRV && SRV.me ? (SRV.me.name || '@' + SRV.me.username) : 'Мой профиль';
-    html += '<div class="mwide"><button class="mcard" type="button" id="profileRow">' + playerAva(SRV && SRV.me ? SRV.me.id : 0, meName, 'mc-ava') +
-      '<span class="t"><b>Профиль</b><small>ур. ' + S.level + ' · ' + esc(compact(G.playerStats(S).worth)) + '</small></span></button>' +
-      (isAdmin() ? '<button class="mcard gold" type="button" id="devRow"><span class="mc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg></span><span class="t"><b>Разработчик</b><small>@' + esc(username()) + '</small></span></button>'
-        : '<button class="mcard" type="button" id="whatsNewRow"><span class="mc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 18.5 12 15.6 7 18.5l1.4-5.7L4 9l5.8-.7z"/></svg></span><span class="t"><b>Что нового</b><small>версия ' + VERSION + '</small></span></button>') + '</div>';
-    // «Ждёт тебя» — только то, что можно сделать прямо сейчас
-    var wait = [], openB = buyersToday().filter(function (b) { return buyerState(b) === 'open'; });
+    var openB = buyersToday().filter(function (b) { return buyerState(b) === 'open'; });
     var fit = {}; openB.forEach(function (b) { buyerMatches(b).forEach(function (m) { fit[m.item.id] = true; }); });
-    var nFit = Object.keys(fit).length, ev = eventNow();
-    if (st.available) wait.push('<button class="row wrow" type="button" id="dailyRow">' + ic('#F2A30F', '<path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1 0 1.5 2.5 1 5 1zM12 7c1.5-3 5-3.5 5-1 0 1.5-2.5 1-5 1z"/>') +
-      '<span class="t">Награда дня<small>серия ' + st.streak + ' ' + plural(st.streak, 'день', 'дня', 'дней') + '</small></span><span class="wv">забрать ' + money(st.reward) + '</span></button>');
-    if (nFit) wait.push('<button class="row wrow" type="button" id="buyersRow2">' + ic('#00AFCA', '<path d="M4 9.5l1.6-4.5h12.8L20 9.5M4 9.5h16M4 9.5v9h16v-9M9.5 13.5h5"/>') +
-      '<span class="t">Скупщики<small>платят дороже цены</small></span><span class="wv">' + nFit + ' ' + plural(nFit, 'номер подходит', 'номера подходят', 'номеров подходят') + '</span></button>');
-    if (unread > 0) wait.push('<button class="row wrow" type="button" id="chatsRow2">' + ic('#2D6BFF', '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17H10l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5z"/>') +
-      '<span class="t">Сообщения<small>тебе написали</small></span><span class="wv">' + unread + ' ' + plural(unread, 'новое', 'новых', 'новых') + '</span></button>');
-    if (ev) wait.push('<div class="row wrow">' + ic('#E8384F', '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>') + '<span class="t">Ивент<small>' + esc(eventLeft(ev)) + '</small></span><span class="wv">' + esc(G.eventTitle(ev)) + '</span></div>');
-    html += '<div class="group-t">Ждёт тебя</div><div class="group flat">' + (wait.length ? wait.join('') : '<div class="row"><span class="t">Пока всё забрано<small>Награда дня обновится завтра, скупщики приходят в 00:00, 08:00 и 16:00</small></span></div>') + '</div>';
+    var nFit = Object.keys(fit).length, ev = eventNow(), achs = G.achList(S), achDone = achs.filter(function (x) { return x.done; }).length, achReady = G.achReady(S);
+    html += '<div class="secs">' +
+      sec('stockRow', '#30B566', 'Склад', S.items.length + ' из ' + CAP, '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>') +
+      sec('upgRow', '#E8384F', 'Апгрейдер', 'шанс до ' + Math.round(G.upgChance(M_MIN) * 100) + '%', '<path d="M12 19V5M6 11l6-6 6 6"/>') +
+      sec('buyersRow', '#00AFCA', 'Скупщики', nFit ? nFit + ' ' + plural(nFit, 'номер подходит', 'номера подходят', 'номеров подходят') : 'платят больше', '<path d="M4 9.5l1.6-4.5h12.8L20 9.5M4 9.5h16M4 9.5v9h16v-9M9.5 13.5h5"/>', nFit || '') +
+      sec('topRow', '#E3A400', 'Топ', 'игроки и рекорды', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4"/>') +
+      sec('chatsRow', '#2D6BFF', 'Сообщения', unread > 0 ? unread + ' ' + plural(unread, 'новое', 'новых', 'новых') : 'чаты с игроками', '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17H10l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5z"/>', unread > 0 ? unread : '') +
+      sec('achRow', '#C98A00', 'Достижения', achDone + ' из ' + achs.length, MEDAL, achReady || '') +
+      sec('oddsRow', '#1D6FD0', 'Шансы', 'редкости и гарант', '<circle cx="8" cy="8" r="2.4"/><circle cx="16" cy="16" r="2.4"/><path d="M18 6L6 18"/>') +
+      sec('promoRow', '#8A5CF5', 'Промокод', 'ввести код', '<path d="M4 8.5a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v7a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2zM10 9.5l4 5M10.2 14.6h.01M13.8 9.4h.01"/>') +
+      sec('histRow', '#6B7A8F', 'История', 'деньги и номера', '<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4M12 8v4l3 2"/>') +
+      (isAdmin() ? sec('devRow', '#E3A400', 'Разработчик', '@' + esc(username()), '<path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/>').replace('class="sec"', 'class="sec gold"')
+        : sec('whatsNewRow', '#33CF7C', 'Что нового', 'версия ' + VERSION, '<path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 18.5 12 15.6 7 18.5l1.4-5.7L4 9l5.8-.7z"/>')) +
+      '</div>';
+    if (ev) html += '<div class="group flat ev-row"><div class="row wrow">' + ic('#E8384F', '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>') + '<span class="t">Ивент<small>' + esc(eventLeft(ev)) + '</small></span><span class="wv">' + esc(G.eventTitle(ev)) + '</span></div></div>';
     html += '<div class="group-t">Тема</div><div class="theme-pick">' + [['auto', tg ? 'Как в Telegram' : 'Как в системе'], ['light', 'Светлая'], ['dark', 'Тёмная']].map(function (t) {
       return '<button type="button" class="tp' + ((S.theme || 'auto') === t[0] ? ' on' : '') + '" data-theme-set="' + t[0] + '" aria-pressed="' + ((S.theme || 'auto') === t[0]) + '"><span class="tp-pv tp-' + t[0] + '"><i></i><i></i><b></b></span><span>' + t[1] + '</span></button>';
     }).join('') + '</div>';
@@ -2101,11 +2183,16 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       toast(S.country === 'any' ? 'Выпуск: любые номера' : 'Выпуск: ' + countryOf(S.country).name);
       return;
     }
-    if (t.closest('#dailyRow')) {
-      if (!dailyStatus().available) return;
-      run('daily').then(function (r) { renderBalance(true); renderDot(); renderMain(); buzz('win'); closeSheet(); toast('Награда дня · +' + money(r.reward)); }, showErr);
+    if ((el = t.closest('#dailyGo'))) {
+      if (!dailyStatus().available || el.disabled) return;
+      el.disabled = true;
+      run('daily').then(function (r) {
+        renderBalance(true); renderMain(); buzz('win'); toast('Награда дня · +' + money(r.reward));
+        var d = document.querySelector('#sheetBody .daily'); if (d) d.outerHTML = dailyHtml();
+      }, function (e) { el.disabled = false; showErr(e); });
       return;
     }
+    if (t.closest('#achRow')) { closeSheet(); openPage('ach'); return; }
     if ((el = t.closest('[data-theme-set]'))) {
       S.theme = el.getAttribute('data-theme-set'); save(); applyTheme(); renderMain(); buzz('sel');
       document.querySelectorAll('[data-theme-set]').forEach(function (b) { var on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
@@ -2121,12 +2208,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (t.closest('#stockRow')) { closeSheet(); stockView.filter = 'all'; openPage('stock'); return; }
     if (t.closest('#devRow')) { closeSheet(); openPage('dev'); return; }
     if (t.closest('#upgRow')) { closeSheet(); upg.last = null; openPage('upg'); return; }
-    if (t.closest('#buyersRow, #buyersRow2')) { closeSheet(); openPage('buyers'); return; }
+    if (t.closest('#buyersRow')) { closeSheet(); openPage('buyers'); return; }
     if (t.closest('#profileRow')) { closeSheet(); openProfile(0); return; }
     if (t.closest('#whatsNewRow, #whatsNewRow2')) { openWhatsNew(); return; }
     if (t.closest('#histRow')) { closeSheet(); openPage('hist'); return; }
     if (t.closest('#topRow')) { closeSheet(); openTop(); return; }
-    if (t.closest('#chatsRow, #chatsRow2')) { if (!SRV) { toast('Сообщения работают в игре через Telegram'); return; } closeSheet(); openChats(); return; }
+    if (t.closest('#chatsRow')) { if (!SRV) { toast('Сообщения работают в игре через Telegram'); return; } closeSheet(); openChats(); return; }
     if (t.closest('#chatNewGo')) { var cq = val('chatNewIn'); if (!cq) { $('chatNewMsg').innerHTML = '<span class="err">Напиши @username или ID.</span>'; return; } closeSheet(); openChat(cq); return; }
     if (t.closest('#oddsRow')) { openRarity(); return; }
     if ((el = t.closest('[data-rpos]'))) { if (!rr.busy) { rr.pos = Number(el.getAttribute('data-rpos')); rr.last = null; rerollRender(); buzz('sel'); } return; }
@@ -2223,7 +2310,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function renderPage(slide) {
     var top = pages[pages.length - 1], p = $('page');
     var html = top.name === 'stock' ? stockHtml() : top.name === 'num' ? numHtml(top.arg) : top.name === 'upg' ? upgHtml()
-      : top.name === 'buyers' ? buyersHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : top.name === 'chats' ? chatsHtml() : top.name === 'chat' ? chatHtml() : top.name === 'profile' ? profileHtml() : devHtml();
+      : top.name === 'buyers' ? buyersHtml() : top.name === 'ach' ? achHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : top.name === 'chats' ? chatsHtml() : top.name === 'chat' ? chatHtml() : top.name === 'profile' ? profileHtml() : devHtml();
     $('pageBody').innerHTML = html;
     if (p.hidden) { p.hidden = false; requestAnimationFrame(function () { p.classList.add('open'); }); }
     if (slide !== false) p.scrollTop = 0;
@@ -2718,8 +2805,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function playerAva(id, name, cls) {
     var letter = String(name || '?').replace(/^@/, '').charAt(0).toUpperCase() || '?';
     var color = SWATCHES[Math.abs(Number(id) || 0) % SWATCHES.length];
+    var mine = (SRV && SRV.me ? SRV.me.id : (tg && tg.initDataUnsafe && tg.initDataUnsafe.user || {}).id) === Number(id);
+    var src = (mine && myPhoto()) || (SRV && id ? 'api/avatar/' + Number(id) : '');
     return '<span class="' + (cls || 'tava') + '" style="background:' + color + '">' + esc(letter) +
-      (SRV && id ? '<img src="api/avatar/' + Number(id) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
+      (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
   }
   // Строка топа: что показываем справа, зависит от вкладки. Цена засекреченного номера не показывается нигде.
   function topRowHtml(p, rank, by, mine) {
@@ -2815,6 +2904,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   // ----- «Что нового»: список изменений по версиям; новое показывается один раз после обновления
   var CHANGES = [
+    { v: '0.14', date: '14 октября', items: [
+      'Достижения: 12 заданий с наградами — в меню и в профиле',
+      'Награда дня — календарь на неделю: видно, сколько дадут завтра и дальше',
+      'Новое меню: карточка игрока, разделы с подписями — что внутри прямо сейчас',
+      'В шапке — твоё фото из Telegram, вокруг него — прогресс уровня',
+      'Кнопка выпуска снова на месте и работает в любой версии Telegram'] },
     { v: '0.13', date: '13 октября', items: [
       'Эффекты при выпадении редких номеров: вспышка, лучи, конфетти и надпись — чем реже номер, тем громче',
       'Апгрейдер с точным шансом: цель — конкретный номер, шанс = 80% × ставка ÷ цена цели, множитель — ползунком',
@@ -2856,13 +2951,30 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function selfProfile() {
     var st = G.playerStats(S), u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
     return { who: { id: 0, username: username(), name: u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'Ты' }, level: S.level, xp: S.xp,
-      worth: st.worth, items: st.items, secret: st.secret, card: st.card, issued: S.issued, upg: S.upg, rank: 1, total: 1, self: true };
+      worth: st.worth, items: st.items, secret: st.secret, card: st.card, issued: S.issued, upg: S.upg, rank: 1, total: 1, self: true,
+      ach: [G.achList(S).filter(function (a) { return a.done; }).length, G.achList(S).length] };
   }
   function cardBlock(title, c) {
     if (!c || !c.d) return '';
     var sec = c.t === E.TIER_INDEX.secret, ev = evOf(c);
     return '<div class="group-t">' + title + '</div><div class="prof-card tier' + c.t + '"><span class="mono tc' + c.t + '">' + esc(fmtFull(c)) + '</span>' +
       '<small><b class="tname tc' + c.t + '">' + esc(sec ? '???' : TIER_NAMES[c.t]) + '</b> · ' + esc(sec ? 'цена скрыта' : money(E.marketPrice(ev))) + '</small></div>';
+  }
+  function achHtml() {
+    var list = G.achList(S), done = list.filter(function (a) { return a.done; }).length, got = 0;
+    list.forEach(function (a) { if (a.claimed) got += a.reward; });
+    var order = function (a) { return a.done && !a.claimed ? 0 : !a.done ? 1 : 2; };
+    list.sort(function (a, b) { return order(a) - order(b); });
+    var html = pageHead('Достижения') + '<div class="ach-sum"><b class="mono">' + done + '/' + list.length + '</b><span>выполнено · награды ' + money(got) + '</span>' +
+      '<span class="ach-bar"><i style="width:' + (done / list.length * 100) + '%"></i></span></div>';
+    html += list.map(function (a) {
+      var st = a.claimed ? 'got' : a.done ? 'ready' : '';
+      return '<div class="ach ' + st + '"><span class="ach-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + MEDAL + '</svg></span>' +
+        '<span class="t"><b>' + esc(a.title) + '</b><small>' + esc(a.text) + '</small>' + (a.goal > 1 && !a.done ? '<span class="ach-bar"><i style="width:' + (a.val / a.goal * 100) + '%"></i></span>' : '') + '</span>' +
+        (a.claimed ? '<span class="ach-ok">получено</span>' : a.done ? '<button class="btn pri" type="button" data-ach="' + a.id + '">+' + esc(shortK(a.reward)) + '</button>'
+          : '<span class="ach-v"><b class="mono">' + (a.goal > 1 ? nf.format(a.val) + '/' + nf.format(a.goal) : '—') + '</b><small>+' + esc(shortK(a.reward)) + '</small></span>') + '</div>';
+    }).join('');
+    return html + '<p class="note">Награда — деньги на баланс. Достижения считаются за всё время игры.</p>';
   }
   function profileHtml() {
     var d = prof.data;
@@ -2879,13 +2991,16 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       '<div><b class="mono">' + nf.format(d.issued) + '</b><span>выпущено</span></div>' +
       '<div><b class="mono">' + (d.upg ? d.upg.win + '/' + d.upg.n : '0/0') + '</b><span>апгрейды</span></div>' +
       '<div><b class="mono">' + nf.format(d.secret || 0) + '</b><span>засекреч.</span></div></div>';
+    if (d.ach) html += '<div class="group flat prof-ach">' + (d.self ? '<button class="row" type="button" id="profAch">' : '<div class="row">') + ic('#C98A00', MEDAL) +
+      '<span class="t">Достижения<small>' + d.ach[0] + ' из ' + d.ach[1] + '</small></span><span class="ach-dots">' +
+      Array.apply(null, Array(d.ach[1])).map(function (x, i) { return '<i' + (i < d.ach[0] ? ' class="on"' : '') + '></i>'; }).join('') + '</span>' + (d.self ? CHEV + '</button>' : '</div>') + '</div>';
     if (d.card && d.card.main) html += cardBlock('Основной номер', d.card);
     if (d.card && d.card.b && !(d.card.main && d.card.b.d === d.card.d)) html += cardBlock('Лучший номер', d.card.b);
     else if (d.card && !d.card.main) html += cardBlock('Лучший номер', d.card);
     html += '<div class="actions prof-act">' + (d.self
       ? '<button class="btn" type="button" id="profStock">Склад</button><button class="btn" type="button" id="profTop">Топ игроков</button>'
       : '<button class="btn pri" type="button" data-chat="' + Number(w.id) + '">Написать</button><button class="btn" type="button" id="profTop">Топ игроков</button>') + '</div>';
-    if (d.self) html += '<p class="note">Профиль привязан к Telegram: имя и фото берутся оттуда. Скоро здесь появятся достижения и витрина номеров.</p>';
+    if (d.self) html += '<p class="note">Профиль привязан к Telegram: имя и фото берутся оттуда.</p>';
     return html;
   }
 
@@ -3535,6 +3650,15 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if ((el = t.closest('[data-profile]'))) { openProfile(Number(el.getAttribute('data-profile'))); return; }
     if ((el = t.closest('[data-chat]'))) { openChat(el.getAttribute('data-chat')); return; }
     if (t.closest('#profStock')) { openPage('stock'); return; }
+    if (t.closest('#profAch')) { openPage('ach'); return; }
+    if ((el = t.closest('[data-ach]'))) {
+      if (el.disabled) return; el.disabled = true;
+      run('ach', { id: el.getAttribute('data-ach') }).then(function (r) {
+        renderBalance(true); renderMain(); buzz('win'); toast('Достижение · +' + money(r.reward));
+        var y = $('page').scrollTop; replacePage('ach'); $('page').scrollTop = y;
+      }, function (e) { el.disabled = false; showErr(e); });
+      return;
+    }
     if (t.closest('#profTop')) { openTop(); return; }
     if (t.closest('#topInfo')) { openTopInfo(); return; }
     if (t.closest('#chatNew')) { openNewChat(); return; }
@@ -3624,7 +3748,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   });
 
   function boot() {
-    rebuildCountries(); $('brandMark').innerHTML = logoHtml(APP_OP) + '<span class="hat" id="hat"></span>'; loadAvatar(); applyHoliday();
+    rebuildCountries(); loadAvatar(); applyHoliday();
     shown = S.balance; renderBalance(false); renderLevel(); renderPity(); renderCountry(); renderDot(); renderPills(); renderMain();
     var last = S.last && S.items.filter(function (x) { return x.id === S.last; })[0];
     hide();

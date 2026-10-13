@@ -73,7 +73,7 @@
   function freshPlayer() {
     return { v: 5, balance: E.CONFIG.startBalance, level: 1, xp: 0, pity: {}, items: [], last: null,
       daily: { last: null, streak: 0 }, jobAt: 0, issued: 0, best: null, log: [], tot: {},
-      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null, main: null, gifts: null, prefs: null };
+      buyers: null, upg: { n: 0, win: 0 }, redeemed: [], forceTier: null, main: null, gifts: null, prefs: null, ach: null, gave: 0 };
   }
   function freshWorld() {
     return { event: null, notice: null, holiday: 'none', promos: [], custom: { regions: [], ops: {}, admins: [] },
@@ -387,7 +387,7 @@
   OPS.daily = function (P, W, a, ctx) {
     var now = nowOf(ctx), st = dailyStatus(P, now);
     if (!st.available) fail('Награда дня уже получена — приходи завтра.');
-    P.daily = { last: dayKey(now, 0), streak: st.streak }; P.balance += st.reward;
+    P.daily = { last: dayKey(now, 0), streak: st.streak, best: Math.max(st.streak, P.daily.best || 0) }; P.balance += st.reward;
     logMoney(P, 'bonus', st.reward, 'Награда дня', null, now);
     return { reward: st.reward, streak: st.streak };
   };
@@ -463,6 +463,42 @@
     return { prefs: out };
   };
 
+  /* ================= достижения ================= */
+  // Награда — в выпусках (k × цена выпуска), поэтому при смене цен награды меняются вместе с ними.
+  function bestTier(P) { return P.best ? evaluate(P.best.d).tier : -1; }
+  var ACH = [
+    { id: 'first', title: 'Первый номер', text: 'Выпусти первый номер', goal: 1, k: 1, val: function (P) { return P.issued; } },
+    { id: 'issue100', title: 'Сотня', text: 'Выпусти 100 номеров', goal: 100, k: 5, val: function (P) { return P.issued; } },
+    { id: 'issue1000', title: 'Конвейер', text: 'Выпусти 1 000 номеров', goal: 1000, k: 25, val: function (P) { return P.issued; } },
+    { id: 'superrare', title: 'Глаз намётан', text: 'Получи сверхредкий номер', goal: 1, k: 2, val: function (P) { return bestTier(P) >= 2 ? 1 : 0; } },
+    { id: 'epic', title: 'Эпично', text: 'Получи эпический номер', goal: 1, k: 10, val: function (P) { return bestTier(P) >= 3 ? 1 : 0; } },
+    { id: 'legendary', title: 'Легенда', text: 'Получи легендарный номер', goal: 1, k: 50, val: function (P) { return bestTier(P) >= 4 ? 1 : 0; } },
+    { id: 'upg1', title: 'Рискнул', text: 'Выиграй в апгрейдере', goal: 1, k: 2, val: function (P) { return P.upg.win; } },
+    { id: 'upg10', title: 'Везунчик', text: 'Выиграй в апгрейдере 10 раз', goal: 10, k: 10, val: function (P) { return P.upg.win; } },
+    { id: 'lvl5', title: 'В деле', text: 'Дойди до 5 уровня', goal: 5, k: 3, val: function (P) { return P.level; } },
+    { id: 'lvl10', title: 'Магнат', text: 'Дойди до 10 уровня', goal: 10, k: 10, val: function (P) { return P.level; } },
+    { id: 'streak7', title: 'Неделя подряд', text: 'Забирай награду дня 7 дней подряд', goal: 7, k: 7, val: function (P) { return Math.max(P.daily.streak || 0, P.daily.best || 0); } },
+    { id: 'gift', title: 'Щедрый', text: 'Подари номер другому игроку', goal: 1, k: 2, val: function (P) { return P.gave || 0; } }
+  ];
+  function achList(P) {
+    var got = P.ach || {};
+    return ACH.map(function (a) {
+      var v = Math.min(a.goal, Number(a.val(P)) || 0);
+      return { id: a.id, title: a.title, text: a.text, goal: a.goal, val: v, done: v >= a.goal, claimed: !!got[a.id], reward: a.k * E.CONFIG.issueCost };
+    });
+  }
+  // Сколько наград ждут, чтобы их забрали (для точки в меню).
+  function achReady(P) { return achList(P).filter(function (a) { return a.done && !a.claimed; }).length; }
+  OPS.ach = function (P, W, a, ctx) {
+    var now = nowOf(ctx), it = achList(P).filter(function (x) { return x.id === a.id; })[0];
+    if (!it) fail('Нет такого достижения.');
+    if (it.claimed) fail('Награда уже получена.');
+    if (!it.done) fail('Достижение ещё не выполнено.');
+    P.ach = P.ach || {}; P.ach[it.id] = now; P.balance += it.reward;
+    logMoney(P, 'bonus', it.reward, 'Достижение «' + it.title + '»', null, now);
+    return { id: it.id, reward: it.reward };
+  };
+
   /* ================= подарок: номер переходит от P к TP ================= */
   // a = { id }, ctx = { now, from, to } — имена для истории. Получателя находит сервер.
   function gift(P, TP, W, a, ctx) {
@@ -474,7 +510,7 @@
     if (P.gifts.n >= GIFT_MAX) fail('Сегодня уже подарено ' + GIFT_MAX + ' номеров — приходи завтра.');
     var set = {}; set[x.id] = true;
     removeItems(P, set);
-    P.gifts.n++;
+    P.gifts.n++; P.gave = (P.gave || 0) + 1;
     x.h = (x.h || []).concat([{ t: now, x: 'Подарок от ' + ctx.from + ' для ' + ctx.to }]).slice(-HIST_MAX);
     TP.items.unshift(x); noteBest(TP, x);
     var num = fmtFull(x, cs);
@@ -618,6 +654,6 @@
     eventNow: eventNow, eventTitle: eventTitle, costOf: costOf, noticeNow: noticeNow, dailyStatus: dailyStatus,
     buyersFor: buyersFor, buyersToday: buyersToday, buyerState: buyerState, buyerAccepts: buyerAccepts, buyerPrice: buyerPrice,
     upgChance: upgChance, upgChanceFor: upgChanceFor, prizeFor: prizeFor, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
-    ops: OPS, adminAct: adminAct, worldOp: worldOp, gift: gift, GIFT_MAX: GIFT_MAX, playerStats: playerStats
+    ops: OPS, adminAct: adminAct, worldOp: worldOp, gift: gift, GIFT_MAX: GIFT_MAX, playerStats: playerStats, achList: achList, achReady: achReady
   };
 });
