@@ -228,7 +228,7 @@
   function buyerPrice(b, ev) { return Math.round(E.marketPrice(ev) * b.mult / 10) * 10; }
 
   /* ---------------- апгрейдер ---------------- */
-  function upgChance(m) { return 0.9 / m; }
+  function upgChance(m) { return 0.8 / m; }   // игра забирает 20% ставки в среднем
   // В какую редкость попадёт цель (как в E.findNumberNear: границы редкости ±12%); -1 — номера такой цены не бывает.
   function tierForPrice(p) {
     for (var t = 0; t < E.TIERS.length - 1; t++) { var pr = E.TIERS[t].price; if (p >= pr[0] * 0.88 && p <= pr[1] * 1.12) return t; }
@@ -453,9 +453,9 @@
       if (isSecretTier(ev.tier)) secret++; else worth += E.marketPrice(ev);
       if (ev.points > bestP) { bestP = ev.points; best = x; }
     });
-    var show = main || best;
+    var show = main || best, card = function (x) { return { d: x.d, c: x.c, net: x.net, t: evaluate(x.d).tier }; };
     return { worth: worth, best: Math.max(0, bestP), level: P.level, secret: secret, items: P.items.length,
-      card: show ? { d: show.d, c: show.c, net: show.net, t: evaluate(show.d).tier, main: !!main } : null };
+      card: show ? Object.assign(card(show), { main: !!main, b: card(best) }) : null };
   }
 
   /* ================= действия администратора над игроком ================= */

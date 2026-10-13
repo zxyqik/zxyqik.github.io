@@ -483,6 +483,12 @@ button.pity { display: block; width: 100%; text-align: left; }
 .tava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .top-row .rank { width: 26px; }
 .top-row.tap { cursor: pointer; }
+.top-row .t small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-row .tv { display: flex; flex-direction: column; align-items: flex-end; text-align: right; white-space: nowrap; }
+.top-row .tv b { font-size: 15px; font-weight: 700; }
+.top-row .tv small { color: var(--hint); font-size: 12px; }
+.top-hint { color: var(--hint); font-size: 13.5px; margin: 8px 4px 2px; line-height: 1.35; }
+#topInfo { margin-left: auto; font-weight: 700; font-size: 17px; }
 /* сообщения */
 .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; flex: none; }
 .cl-row .t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -534,6 +540,14 @@ button.pity { display: block; width: 100%; text-align: left; }
 .top-row .t small .mono { font-size: 13px; }
 .gift-num { text-align: center; font-size: 18px; margin: 2px 0 12px; }
 #page .tabs { margin-bottom: 4px; }
+.sq { position: relative; margin: 12px 0 4px; }
+.sq svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--hint); }
+.sq .inp { padding-left: 38px; }
+.row .v.sv { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.row .v.sv b { color: var(--text); font-size: 14px; font-weight: 600; }
+.row .v.sv small { font-size: 11.5px; font-weight: 600; }
+.row .v.sv small.tc0 { color: var(--hint); }
+.chips .fchip { white-space: nowrap; flex: none; }
 .btn.icon { display: grid; place-items: center; }
 .btn.icon .lock { color: inherit; width: 18px; height: 18px; }
 .btn.icon.on { background: var(--text); color: var(--bg); }
@@ -721,6 +735,14 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 .act-who { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13.5px; margin: -6px 4px 14px; }
 .act-who small { color: var(--hint); font-family: var(--ui); }
 .ava.sm { width: 24px; height: 24px; font-size: 12px; }
+.promo-hero { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 18px 12px 16px; margin-bottom: 16px; border-radius: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--bg-2)), color-mix(in srgb, #8A5CF5 22%, var(--bg-2))); }
+.promo-hero .promo-ic { font-size: 34px; line-height: 1; margin-bottom: 4px; }
+.promo-hero b { font-size: 20px; }
+.promo-hero span { color: var(--hint); font-size: 13.5px; }
+.promo-in { border: 2px dashed color-mix(in srgb, var(--hint) 45%, transparent); background: var(--bg); letter-spacing: .12em; }
+.promo-in:focus-visible { border-color: var(--accent); box-shadow: none; }
+.promo-msg { min-height: 20px; margin: 8px 2px 10px; }
 .inp.big { height: 54px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; text-align: center; }
 .inp.area { height: auto; padding: 10px 12px; resize: none; line-height: 1.4; font-family: var(--ui); }
 .qchips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
@@ -2077,7 +2099,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   /* ---------------- страницы: склад, номер, режим разработчика ---------------- */
   // Стек страниц поверх главного экрана. «Назад» (и кнопка Telegram) закрывает сначала шторку, потом страницу.
   var pages = [];
-  var stockView = { filter: 'all', sort: 'price', select: false, picked: {}, limit: 200 };
+  var stockView = { filter: 'all', sort: 'price', select: false, picked: {}, limit: 200, q: '' };
+  var TIER_PLURAL = ['Обычные', 'Редкие', 'Сверхредкие', 'Эпические', 'Легендарные', 'Мифические', '???'];
   function findItem(id) { for (var i = 0; i < S.items.length; i++) if (S.items[i].id === id) return S.items[i]; return null; }
   // оценка зависит только от цифр — кэшируем, чтобы склад на 1000 номеров открывался быстро
   var evCache = {}, evCount = 0;
@@ -2145,11 +2168,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }
     return '<button class="row num-row' + (picked ? ' picked' : '') + '"' + attr + '>' + (pick || logoHtml(opOf(m.item), 'sm')) +
       '<span class="t">' + numColored(m.item, t) + '<small>' + flagSvg(m.item.c) + ' ' + esc(netName(m.item)) + '</small></span>' +
-      lock + '<span class="v mono">' + esc(priceLabel(m.ev)) + '</span></button>';
+      lock + '<span class="v sv"><b class="mono">' + esc(priceLabel(m.ev)) + '</b><small class="tc' + t + '">' + esc(t === E.TIER_INDEX.secret ? '???' : TIER_NAMES[t]) + '</small></span></button>';
   }
   function stockFiltered(all) {
     var f = stockView.filter;
-    return all.filter(function (m) { return f === 'all' || (f === 'lock' ? m.item.lock : String(m.ev.tier) === f); });
+    var q = stockView.q;
+    return all.filter(function (m) { return (f === 'all' || (f === 'lock' ? m.item.lock : String(m.ev.tier) === f)) && (!q || m.item.d.indexOf(q) >= 0); });
   }
   function updatePicked() {
     var b = $('sellPicked'); if (!b) return;
@@ -2169,9 +2193,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     html += '<div class="sum"><b class="mono">' + all.length + '</b> из ' + CAP + (all.length ? ' · всего <b class="mono">' + esc(sumLabel(all)) + '</b>' : '') +
       (all.length >= CAP ? ' · <span class="minus">склад полон</span>' : '') + '</div>';
     html += '<div class="cap"><i style="width:' + Math.min(100, all.length / CAP * 100) + '%"></i></div>';
+    if (all.length) html += '<div class="sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>' +
+      '<input class="inp" id="stockQ" inputmode="numeric" maxlength="7" placeholder="Найти по цифрам, например 777" value="' + esc(stockView.q) + '" aria-label="Поиск по цифрам"></div>';
     if (!all.length) return html + '<div class="empty"><b>Склад пуст</b><span>Выпусти первый номер на главном экране — он появится здесь.</span><button class="btn pri" type="button" data-back>На главную</button></div>';
     html += '<div class="chips"><button type="button" class="fchip' + (f === 'all' ? ' on' : '') + '" data-filter="all">Все · ' + all.length + '</button>';
-    for (var t = 6; t >= 0; t--) if (counts[t]) html += '<button type="button" class="fchip' + (f === String(t) ? ' on' : '') + '" data-filter="' + t + '"><span class="td tc' + t + '"><i></i>' + counts[t] + '</span></button>';
+    for (var t = 6; t >= 0; t--) if (counts[t]) html += '<button type="button" class="fchip' + (f === String(t) ? ' on' : '') + '" data-filter="' + t + '"><span class="td tc' + t + '"><i></i>' + TIER_PLURAL[t] + ' · ' + counts[t] + '</span></button>';
     if (locked) html += '<button type="button" class="fchip' + (f === 'lock' ? ' on' : '') + '" data-filter="lock">' + LOCK + ' ' + locked + '</button>';
     html += '</div><div class="sortbar"><div class="seg small">' + [['price', 'дорогие'], ['tier', 'редкие'], ['new', 'новые']].map(function (o) {
       return '<label><input type="radio" name="sort" value="' + o[0] + '"' + (stockView.sort === o[0] ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
@@ -2590,28 +2616,50 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     return '<span class="' + (cls || 'tava') + '" style="background:' + color + '">' + esc(letter) +
       (SRV && id ? '<img src="api/avatar/' + Number(id) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
   }
+  // Строка топа: что показываем справа, зависит от вкладки. Цена засекреченного номера не показывается нигде.
   function topRowHtml(p, rank, by, mine) {
     var place = rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank;
     var who = p.name || (p.username ? '@' + p.username : 'Игрок');
-    var card = p.card && p.card.d ? '<small>' + (p.card.main ? MAINMARK + ' ' : '') + numColored(p.card, p.card.t) + '</small>' : '<small>склад пуст</small>';
-    var v = by === 'worth' ? money(p.worth) : by === 'best' ? nf.format(p.best) + ' ' + plural(p.best, 'очко', 'очка', 'очков') : 'ур. ' + p.level;
+    var c = p.card && p.card.d ? (by === 'best' && p.card.b ? p.card.b : p.card) : null;
+    var line = c ? '<small>' + (by !== 'best' && p.card.main ? MAINMARK + ' ' : '') + numColored(c, c.t) + '</small>' : '<small>склад пуст</small>';
+    var v, cap;
+    if (by === 'worth') { v = '<b class="mono">' + esc(compact(p.worth)) + '</b>'; cap = 'склад'; }
+    else if (by === 'best') {
+      v = c ? '<b class="tname tc' + c.t + '">' + esc(c.t === E.TIER_INDEX.secret ? '???' : TIER_NAMES[c.t]) + '</b>' : '<b>—</b>';
+      cap = c ? (c.t === E.TIER_INDEX.secret ? 'цена скрыта' : money(E.marketPrice(evOf(c)))) : '';
+    } else { v = '<b class="mono">' + p.level + '</b>'; cap = 'уровень'; }
     var tap = SRV && !mine && p.id;
     return '<div class="row top-row' + (mine ? ' me' : '') + (tap ? ' tap" data-chat="' + Number(p.id) : '') + '"><span class="rank mono">' + place + '</span>' + playerAva(p.id, who) + '<span class="t"><span>' + esc(who) +
-      (p.username && p.name ? ' <span class="un">@' + esc(p.username) + '</span>' : '') + '</span>' + card + '</span><span class="v mono">' + esc(v) + '</span></div>';
+      (p.username && p.name ? ' <span class="un">@' + esc(p.username) + '</span>' : '') + '</span>' + line + '</span><span class="tv">' + v + '<small>' + esc(cap) + '</small></span></div>';
   }
+  var TOP_INFO = {
+    worth: 'Сколько стоят все номера на складе вместе — за столько их можно продать прямо сейчас.',
+    best: 'Самый ценный номер на складе игрока. Чем красивее комбинация цифр, тем выше редкость и цена.',
+    level: 'Уровень растёт с каждым выпуском, редкие номера дают больше опыта.'
+  };
   function topHtml() {
     var by = topView.by, d = topView.data[by];
-    var html = pageHead('Топ игроков') + '<div class="tabs" role="tablist">' + TOP_TABS.map(function (t) {
+    var html = pageHead('Топ игроков', '<button class="ghost round" type="button" id="topInfo" aria-label="Как считается топ">?</button>') + '<div class="tabs" role="tablist">' + TOP_TABS.map(function (t) {
       return '<button type="button" role="tab" data-topby="' + t[0] + '" aria-selected="' + (by === t[0]) + '">' + t[1] + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div><p class="top-hint">' + TOP_INFO[by] + '</p>';
     if (!d) return html + '<div class="empty"><b>Загружаем топ…</b></div>';
     var r = d.r, meId = r.me && r.me.id;
     if (r.me) html += '<div class="group-t">Твоё место</div><div class="group flat">' + topRowHtml(r.me, r.me.rank, by, true) + '</div>';
     html += '<div class="group-t">' + (SRV ? 'Лучшие · всего ' + nf.format(r.total) + ' ' + plural(r.total, 'игрок', 'игрока', 'игроков') : 'В демо в топе только ты') + '</div>' +
       '<div class="group flat">' + r.list.map(function (p, i) { return topRowHtml(p, i + 1, by, p.id === meId); }).join('') + '</div>';
-    html += '<p class="note">' + (SRV ? 'Нажми на игрока, чтобы написать ему. ' : '') + (S.main ? 'Рядом с именем — твой основной номер.' : 'Выбери основной номер на странице номера — его увидят все. Пока в топе твой лучший номер.') +
-      (by === 'worth' ? ' Коллекция — сколько стоит склад (засекреченные номера не считаются).' : '') + '</p>';
+    html += '<p class="note">' + (SRV ? 'Нажми на игрока, чтобы написать ему. ' : '') + (S.main ? '★ — основной номер игрока.' : 'Выбери основной номер на странице номера — его увидят все.') + '</p>';
     return html;
+  }
+  // Как считается ценность номера: узоры → очки → редкость → цена.
+  function openTopInfo() {
+    openSheet('<h2>Как считается топ</h2><div class="group flat">' +
+      '<div class="row"><span class="t">Коллекция<small>' + TOP_INFO.worth + ' Засекреченные номера не считаются.</small></span></div>' +
+      '<div class="row"><span class="t">Лучший номер<small>' + TOP_INFO.best + '</small></span></div>' +
+      '<div class="row"><span class="t">Уровень<small>' + TOP_INFO.level + '</small></span></div></div>' +
+      '<div class="group-t">Откуда берётся ценность номера</div><div class="group flat">' +
+      '<div class="row"><span class="t">Узоры<small>Повторы (777), лесенки (345), зеркала (12321), пары, чередования, «счастливые» семёрки. Каждый узор даёт очки.</small></span></div>' +
+      '<div class="row"><span class="t">Комбо<small>Несколько узоров в одном номере умножают очки.</small></span></div>' +
+      '<div class="row"><span class="t">Очки → редкость → цена<small>Чем больше очков, тем выше редкость (видна по цвету) и цена. Узоры номера видны на его странице.</small></span></div></div>');
   }
 
   // ----- сообщения: список диалогов и чат с игроком
@@ -2711,6 +2759,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   setInterval(pollChat, 4000);
   $('page').addEventListener('input', function (e) {
+    if (e.target.id === 'stockQ') {
+      var v = e.target.value.replace(/\D/g, '').slice(0, 7);
+      stockView.q = v; stockView.limit = 200; replacePage('stock');
+      var qi = $('stockQ'); if (qi) { qi.focus(); qi.setSelectionRange(v.length, v.length); }
+      return;
+    }
     if (e.target.id === 'chatIn') { var t = e.target; t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; }
   });
   $('page').addEventListener('keydown', function (e) {
@@ -2719,8 +2773,9 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   // промокоды: игрок вводит код в меню
   function openPromo() {
-    openSheet('<h2>Промокод</h2><input class="inp big mono" id="promoIn" maxlength="16" placeholder="КОД" autocomplete="off" aria-label="Промокод">' +
-      '<p class="msg" id="promoMsg"></p><button class="btn pri wide" type="button" id="promoGo">Активировать</button>' +
+    openSheet('<div class="promo-hero"><span class="promo-ic">🎁</span><b>Промокод</b><span>Введи код — получишь деньги или номер</span></div>' +
+      '<input class="inp big mono promo-in" id="promoIn" maxlength="16" placeholder="ВВЕДИ КОД" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Промокод">' +
+      '<p class="msg promo-msg" id="promoMsg"></p><button class="btn pri wide promo-go" type="button" id="promoGo">Активировать</button>' +
       '<p class="note">Промокоды раздают в канале игры и на ивентах. Каждый код можно ввести один раз.</p>');
   }
   function redeem() {
@@ -2851,7 +2906,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }, function (e) { el.disabled = false; showErr(e); });
   }
 
-  // ----- апгрейдер: ставишь до 10 номеров и выбираешь множитель; шанс = 90% / множитель
+  // ----- апгрейдер: ставишь до 10 номеров и выбираешь множитель; шанс = 80% / множитель
   var MULTS = [1.5, 2, 3, 5, 10, 20], RR_UP = 96, RING = 2 * Math.PI * RR_UP;
   var upg = { ids: [], m: 2, busy: false, last: null, angle: 0, more: 150 };
   function upgOk(x) { return !!x && !x.lock && !isSecret(evOf(x)); }
@@ -2859,7 +2914,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     upg.ids = upg.ids.filter(function (id) { return upgOk(findItem(id)); });
     return upg.ids.map(function (id) { var x = findItem(id); return { item: x, ev: evOf(x) }; });
   }
-  function upgChance(m) { return 0.9 / m; }
+  function upgChance(m) { return G.upgChance(m); }
   // в какую редкость попадёт цель (как в E.findNumberNear: границы редкости ±12%); -1 — номера такой цены не бывает
   function tierForPrice(p) {
     for (var t = 0; t < E.TIERS.length - 1; t++) { var pr = E.TIERS[t].price; if (p >= pr[0] * 0.88 && p <= pr[1] * 1.12) return t; }
@@ -2931,10 +2986,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   function openUpgHelp() {
     var html = '<h2>Как работает апгрейдер</h2><div class="group flat">' +
       '<div class="row"><span class="t">Ставка<small>До 10 номеров со склада. Закреплённые и Secret не участвуют.</small></span></div>' +
-      '<div class="row"><span class="t">Множитель и шанс<small>Чем больше множитель, тем меньше шанс: 90% ÷ множитель. ×2 — 45%, ×10 — 9%.</small></span></div>' +
+      '<div class="row"><span class="t">Множитель и шанс<small>Чем больше множитель, тем меньше шанс: 80% ÷ множитель. ×2 — 40%, ×10 — 8%.</small></span></div>' +
       '<div class="row"><span class="t">Выигрыш<small>Бегунок остановился на цветной дуге — получаешь номер на сумму ставки × множитель (±12%). Если номеров такой цены не бывает, получаешь эту сумму деньгами.</small></span></div>' +
       '<div class="row"><span class="t">Проигрыш<small>Номера ставки сгорают.</small></span></div>' +
-      '<div class="row"><span class="t">Честно<small>В среднем апгрейдер возвращает 90% ставки, как и любое казино — в небольшой минус.</small></span></div></div>' +
+      '<div class="row"><span class="t">Честно<small>В среднем апгрейдер возвращает 80% ставки — как в любом казино, игра в плюсе.</small></span></div></div>' +
       (S.upg.n ? '<p class="note">Твои апгрейды: удачных ' + S.upg.win + ' из ' + S.upg.n + '.</p>' : '');
     openSheet(html);
   }
@@ -3203,6 +3258,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (t.closest('#shareBtn')) { var si = findItem(pages[pages.length - 1].arg); if (si) shareNum(si); return; }
     if (t.closest('#giftBtn')) { var gi = findItem(pages[pages.length - 1].arg); if (gi) openGift(gi); return; }
     if ((el = t.closest('[data-chat]'))) { openChat(el.getAttribute('data-chat')); return; }
+    if (t.closest('#topInfo')) { openTopInfo(); return; }
     if (t.closest('#chatNew')) { openNewChat(); return; }
     if (t.closest('#chatMore')) { loadOlder(); return; }
     if (t.closest('#chatSend')) { sendChat(); return; }

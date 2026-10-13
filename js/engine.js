@@ -26,12 +26,12 @@
     // Перекрутка цифры: выпадает случайная цифра 0–9. Цифры, которые сильно поднимают цену,
     // выпадают реже: вес = (новая цена / текущая)^−power. Попытка стоит чуть больше ожидаемого
     // выигрыша (feeMarkup), поэтому стабильно зарабатывать на перекрутке нельзя.
-    reroll: { power: 1.2, feeMarkup: 1.15, minFee: 200 },
+    reroll: { power: 1.2, feeMarkup: 1.3, minFee: 200 },
     numberLength: 7,
     daily: { base: 3000, perStreakDay: 500, maxStreak: 7 },
     sideJob: { amount: 1300, cooldownMs: 5 * 60 * 1000 }, // если не хватает на выпуск
     xpPerIssue: 10,
-    levelReward: function (level) { return 1000 * level; },
+    levelReward: function (level) { return 500 * level; },
     // Отображение эквивалентов. 1 игровой $ = 100 игровых ₽, 1 игровой € = 110 ₽.
     currencies: {
       RUB: { symbol: '₽', perUnit: 1, name: 'игровые рубли' },
@@ -51,13 +51,13 @@
    * ни шанс, ни цена не показываются игроку.
    */
   var TIERS = [
-    { id: 'common',    name: 'Обычный',      minPoints: 0,    chance: null,     price: [580, 1080],        xp: 0 },
-    { id: 'rare',      name: 'Редкий',       minPoints: 30,   chance: 0.09,     price: [1300, 2600],       xp: 5 },
-    { id: 'superrare', name: 'Сверхредкий',  minPoints: 70,   chance: 0.028,    price: [3300, 7000],       xp: 12 },
-    { id: 'epic',      name: 'Эпический',    minPoints: 150,  chance: 0.009,    price: [8000, 21000],      xp: 25 },
-    { id: 'legendary', name: 'Легендарный',  minPoints: 400,  chance: 0.0011,   price: [35000, 130000],    xp: 60 },
-    { id: 'mythic',    name: 'Мифический',   minPoints: 1000, chance: 0.0001,   price: [250000, 900000],   xp: 200, maxPoints: 3000 },
-    { id: 'secret',    name: 'Secret',       minPoints: null, chance: 0.000005, price: [5000000, 9000000], xp: 1000, hidden: true }
+    { id: 'common',    name: 'Обычный',      minPoints: 0,    chance: null,     price: [400, 900],          xp: 0 },
+    { id: 'rare',      name: 'Редкий',       minPoints: 30,   chance: 0.09,     price: [1300, 2600],        xp: 5 },
+    { id: 'superrare', name: 'Сверхредкий',  minPoints: 70,   chance: 0.028,    price: [3500, 8000],        xp: 12 },
+    { id: 'epic',      name: 'Эпический',    minPoints: 150,  chance: 0.002,    price: [35000, 120000],     xp: 25 },
+    { id: 'legendary', name: 'Легендарный',  minPoints: 400,  chance: 0.0002,   price: [150000, 500000],    xp: 60 },
+    { id: 'mythic',    name: 'Мифический',   minPoints: 1000, chance: 0.00001,  price: [1000000, 3000000],  xp: 200, maxPoints: 3000 },
+    { id: 'secret',    name: 'Secret',       minPoints: null, chance: 0.000001, price: [10000000, 20000000], xp: 1000, hidden: true }
   ];
   TIERS[0].chance = 1 - TIERS.slice(1).reduce(function (s, t) { return s + t.chance; }, 0);
 
@@ -69,8 +69,8 @@
   var PITY = [
     { tier: 1, every: 10 },
     { tier: 2, every: 40 },
-    { tier: 3, every: 120 },
-    { tier: 4, every: 600 }
+    { tier: 3, every: 700 },
+    { tier: 4, every: 7000 }
   ];
 
   // Выдуманные сети. Код страны +0 не существует, позвонить невозможно.
