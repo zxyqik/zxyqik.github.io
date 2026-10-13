@@ -469,6 +469,7 @@ select.inp { appearance: none; -webkit-appearance: none; }
 .td.tc6 i { background: linear-gradient(135deg, var(--sx-a) 50%, var(--sx-b) 50%); box-shadow: 0 0 0 1px var(--line); }
 button.pity { display: block; width: 100%; text-align: left; }
 .pity .td { font-size: 11.5px; margin-left: 7px; }
+.pity .td.sure { font-weight: 800; padding: 1px 6px; border-radius: 7px; background: color-mix(in srgb, currentColor 16%, transparent); }
 .odds-chip { display: inline-block; padding: 2px 8px; margin-right: 8px; border-radius: 7px; background: var(--bg-2); color: var(--text); font-weight: 650; }
 .odds-row .ch { font-weight: 700; font-size: 16px; }
 .odds-row .t small b { color: var(--text); font-weight: 600; }
@@ -627,7 +628,26 @@ button.pity { display: block; width: 100%; text-align: left; }
 #page .tabs { margin-bottom: 4px; }
 .stock-q { position: relative; margin: 12px 0 4px; }
 .stock-q svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--hint); }
-.stock-q .inp { padding-left: 38px; }
+.stock-q .inp { padding-left: 38px; padding-right: 42px; }
+.sq-x { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--hint); }
+.sq-x svg { width: 16px; height: 16px; }
+.stock-sum { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 12px; padding: 14px 14px 12px; border-radius: 18px; margin: 2px 0 2px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 13%, var(--bg-2)), var(--bg-2) 70%); }
+.stock-sum > div { display: flex; flex-direction: column; min-width: 0; }
+.stock-sum b { font-size: 22px; font-weight: 650; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stock-sum span { color: var(--hint); font-size: 12.5px; }
+.stock-sum .ss-r { align-items: flex-end; } .stock-sum .ss-r b { font-size: 17px; }
+.ss-bar { grid-column: 1 / -1; display: block; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.ss-bar i { display: block; height: 100%; background: var(--accent); }
+.stock-sum.full .ss-bar i { background: var(--danger); } .stock-sum.full .ss-r span { color: var(--danger); }
+#stockList [data-num] { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#stockList.sel .pick { touch-action: none; }
+#stockList.sel .row .pick { position: relative; }
+#stockList.sel .pick::before { content: ''; position: absolute; inset: -12px; }
+.sel-hint { display: flex; align-items: center; gap: 8px; color: var(--hint); font-size: 12.5px; margin: -2px 4px 10px; }
+.sel-hint svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
+.sel-foot .actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 8px; }
+.sel-foot .actions .btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; }
 .row .v.sv { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
 .row .v.sv b { color: var(--text); font-size: 14px; font-weight: 600; }
 .row .v.sv small { font-size: 11.5px; font-weight: 600; }
@@ -735,7 +755,8 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 .dial .ticks line { stroke: var(--line); stroke-width: 1.4; stroke-linecap: round; }
 .dial .ticks line.mj { stroke: var(--hint); stroke-width: 2; opacity: .6; }
 .dial .track { fill: none; stroke: var(--bg-2); stroke-width: 16; }
-.dial .arc { fill: none; stroke: url(#upgArc); stroke-width: 16; stroke-linecap: round; transition: stroke-dasharray .5s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 45%, transparent)); }
+.dial-wrap { --tc: var(--accent); }
+.dial .arc { fill: none; stroke: url(#upgArc); stroke-width: 16; stroke-linecap: round; transition: stroke-dasharray .5s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--tc) 55%, transparent)); }
 .dial .trail { fill: none; stroke: color-mix(in srgb, var(--text) 26%, transparent); stroke-width: 16; stroke-linecap: round; opacity: 0; }
 .dial .kb { fill: var(--bg); stroke: var(--text); stroke-width: 2.5; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
 .dial .kb-dot { fill: var(--text); transition: fill .3s; }
@@ -780,15 +801,30 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 .um-top { display: flex; justify-content: space-between; align-items: baseline; color: var(--hint); font-size: 13px; }
 .um-top b { color: var(--text); font-size: 20px; }
 .um-range { width: 100%; margin: 10px 0 8px; accent-color: var(--accent); height: 28px; }
-.um-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-.um-chips button { flex: 1 0 auto; height: 32px; padding: 0 10px; border-radius: 10px; background: var(--bg); font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--hint); }
+.um-chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.um-chips button { height: 34px; padding: 0; border-radius: 10px; background: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--hint); transition: background-color .15s, color .15s; }
 .um-chips button.on { color: var(--accent-ink); background: var(--accent); }
-.upg-prize { margin-top: 10px; background: var(--bg-2); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; border: 1.5px solid transparent; }
+.um-chips button:disabled { opacity: .3; }
+.upg-mult.off .um-top b { color: var(--hint); }
+.upg-sh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 16px 4px 8px; }
+.upg-sh b { font-size: 15px; } .upg-sh span { color: var(--hint); font-size: 13px; }
+.upg-mult { margin-top: 12px; }
+.upg-prize { --tc: var(--accent); margin-top: 10px; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid transparent;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tc) 14%, var(--bg-2)), var(--bg-2) 60%); }
+.upg-prize .up-h { display: flex; justify-content: space-between; align-items: center; }
+.upg-prize .up-tag { font-size: 12px; font-weight: 700; color: var(--tc); padding: 3px 9px; border-radius: 10px; background: color-mix(in srgb, var(--tc) 16%, transparent); }
+.upg-prize .up-f { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.upg-prize .up-p { display: flex; flex-direction: column; }
+.upg-prize .up-p b { font-size: 18px; font-weight: 650; } .upg-prize .up-p small { color: var(--hint); font-size: 12px; }
+.upg-prize .up-re { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 11px; background: var(--bg); color: var(--text); font-size: 13.5px; font-weight: 600; flex: none; }
+.upg-prize .up-re svg { width: 15px; height: 15px; }
+.upg-prize.none { background: var(--bg-2); border-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+.upg-prize.none b { font-size: 16px; } .upg-prize.none .up-r { display: block; line-height: 1.35; }
 .upg-prize.tier1 { border-color: var(--c1); } .upg-prize.tier2 { border-color: var(--c2); } .upg-prize.tier3 { border-color: var(--c3); }
 .upg-prize.tier4 { border-color: var(--c4); } .upg-prize.tier5 { border-color: var(--c5); }
 .upg-prize .up-l { color: var(--hint); font-size: 12.5px; }
 .upg-prize .up-num { display: flex; align-items: center; gap: 10px; }
-.upg-prize .up-num b { font-size: 17px; font-weight: 600; }
+.upg-prize .up-num b { font-size: 19px; font-weight: 650; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .upg-prize .up-r { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--hint); }
 .upg-prize .link-btn { color: var(--accent); font-weight: 600; font-size: 13.5px; }
 .mseg { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--bg-2); border-radius: 14px; padding: 3px; }
@@ -799,15 +835,6 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 .mseg button small { font-family: var(--ui); font-size: 10.5px; font-weight: 500; opacity: .85; }
 .mseg button[aria-checked="true"] { color: var(--text); }
 .mseg button[aria-checked="true"] small { color: var(--accent); opacity: 1; }
-.upg-stats { display: grid; grid-template-columns: 1fr 34px 1fr; align-items: stretch; gap: 6px; margin-top: 12px; }
-.us { background: var(--bg-2); border-radius: 14px; padding: 11px 13px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.us > span:first-child { color: var(--hint); font-size: 12px; }
-.us b { font-size: 18px; font-weight: 600; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.us small { color: var(--hint); font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.us small .td { font-size: 11px; }
-.us.tgt { text-align: right; align-items: flex-end; }
-.us-arrow { display: grid; place-items: center; color: var(--hint); }
-.us-arrow svg { width: 20px; height: 20px; }
 .upg-res { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 14px; text-align: left; animation: resIn .45s cubic-bezier(.2,.85,.2,1); }
 .upg-res .t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .upg-res .t b { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -868,6 +895,21 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 .act-who { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13.5px; margin: -6px 4px 14px; }
 .act-who small { color: var(--hint); font-family: var(--ui); }
 .ava.sm { width: 24px; height: 24px; font-size: 12px; }
+/* промокод — билет: цветной верх, линия отрыва с вырезами, поле кода снизу */
+.ticket { border-radius: 20px; overflow: hidden; background: var(--bg-2); margin-bottom: 4px; }
+.tk-top { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 20px 16px 18px; text-align: center; color: #fff;
+  background: linear-gradient(135deg, #7B4DF0 0%, #D9467F 55%, #F2A30F 100%); }
+.tk-top::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 8px, transparent 8px 16px); pointer-events: none; }
+.tk-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.2); margin-bottom: 6px; }
+.tk-ic svg { width: 26px; height: 26px; }
+.tk-top b { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; } .tk-top span { font-size: 13.5px; opacity: .9; }
+.tk-cut { position: relative; height: 0; margin: 0 18px; border-top: 2px dashed var(--line); }
+.tk-cut::before, .tk-cut::after { content: ''; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); }
+.tk-cut::before { left: -30px; } .tk-cut::after { right: -30px; }
+.tk-bot { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.tk-l { color: var(--hint); font-size: 12.5px; text-align: center; }
+.ticket .promo-in { text-align: center; text-transform: uppercase; }
+.promo-go { margin-top: 2px; }
 .promo-hero { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 18px 12px 16px; margin-bottom: 16px; border-radius: 18px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--bg-2)), color-mix(in srgb, #8A5CF5 22%, var(--bg-2))); }
 .promo-hero .promo-ic { font-size: 34px; line-height: 1; margin-bottom: 4px; }
@@ -1489,7 +1531,10 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     $('meRing').style.setProperty('--p', pct.toFixed(1)); $('meLv').textContent = S.level;
   }
   function renderPity() {
-    $('pity').innerHTML = '<span class="odds-chip">Шансы %</span>Гарант через' + E.pityLeft(S.pity).map(function (x) { return '<span class="td tc' + x.tier + '"><i></i>' + x.left + '</span>'; }).join('');
+    var n = S.batch || 1;
+    $('pity').innerHTML = '<span class="odds-chip">Шансы %</span>гарант через' + E.pityLeft(S.pity).map(function (x) {
+      return '<span class="td tc' + x.tier + (x.left <= n ? ' sure' : '') + '"><i></i>' + nf.format(x.left) + '</span>';
+    }).join('');
   }
   function renderCountry() {
     if (S.country === 'any') { $('countryFlag').innerHTML = flagSvg('any'); $('countryTx').textContent = 'Любые номера'; return; }
@@ -1840,7 +1885,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     b.disabled = !enabled; b.classList.toggle('alt', alt);
     $('mainTx').textContent = text;
     $('stockTx').textContent = S.items.length + '/' + CAP; $('stockChip').classList.toggle('full', S.items.length >= CAP);
-    renderDot();
+    renderDot(); renderPity();
   }
   setInterval(function () { if (!busy && !affordable(1)) renderMain(); }, 1000);
   setInterval(function () { if (!busy) { renderPills(); renderMain(); } }, 20000);
@@ -1866,11 +1911,14 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     if (pages.length && pages[pages.length - 1].name === 'upg' && !upg.busy) replacePage('upg');
   }
   $('scrim').addEventListener('click', closeSheet);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') goBack(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') goBack();
+    else if (e.key === 'Enter' && e.target && e.target.id === 'promoIn') { e.preventDefault(); redeem(); }
+  });
 
   function ic(color, path) { return '<span class="ic" style="background:' + color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg></span>'; }
   var CHEV = '<svg class="chev" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
-  var VERSION = '0.14';
+  var VERSION = '0.15';
 
   var MEDAL = '<circle cx="12" cy="14.5" r="5.5"/><path d="M8.6 10.2L6 3.5h4l2 4.5 2-4.5h4l-2.6 6.7M12 12.3v4.4"/>';
   // короткая сумма для клеток календаря: 3к, 3,5к, 50к, 1,2 млн
@@ -2014,11 +2062,11 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
       if (t.hidden) return;
       var p = i === 0 ? rest : t.chance * luck, one = Math.round(1 / p);
       var sub = (i === 0 ? 'всё остальное' : '1 из ' + nf.format(one)) + ' · ' + priceRange(t) +
-        (left[i] != null ? ' · гарант через <b>' + left[i] + '</b>' : '');
+        (left[i] != null ? ' · гарант через <b>' + nf.format(left[i]) + '</b>' : '');
       html += '<div class="row odds-row"><span class="td tc' + i + '"><i></i></span><span class="t"><span class="tname tc' + i + '">' + esc(t.name) + '</span><small>' + sub + '</small></span>' +
         '<span class="v mono ch">' + pctLabel(p) + '</span></div>';
     });
-    html += '</div><p class="note">Шанс — для одного выпуска. Редкость номера видна по цвету цифр, а цена внутри редкости зависит от силы комбинации. Гарант: если долго не везёт, номер этой редкости выпадет обязательно.</p>';
+    html += '</div><p class="note">Шанс — для одного выпуска. Редкость номера видна по цвету цифр, а цена внутри редкости зависит от силы комбинации. Гарант — сколько выпусков осталось, пока номер этой редкости (или выше) не выпадет обязательно. Выпал раньше — счётчик начинается заново. Подсвеченный гарант сработает в выбранной пачке.</p>';
     openSheet(html);
   }
 
@@ -2312,6 +2360,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var html = top.name === 'stock' ? stockHtml() : top.name === 'num' ? numHtml(top.arg) : top.name === 'upg' ? upgHtml()
       : top.name === 'buyers' ? buyersHtml() : top.name === 'ach' ? achHtml() : top.name === 'hist' ? histHtml() : top.name === 'top' ? topHtml() : top.name === 'chats' ? chatsHtml() : top.name === 'chat' ? chatHtml() : top.name === 'profile' ? profileHtml() : devHtml();
     $('pageBody').innerHTML = html;
+    if (top.name === 'stock') updatePicked();
     if (p.hidden) { p.hidden = false; requestAnimationFrame(function () { p.classList.add('open'); }); }
     if (slide !== false) p.scrollTop = 0;
     syncBack(); renderMain();
@@ -2363,19 +2412,66 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     var b = $('sellPicked'); if (!b) return;
     var picked = Object.keys(stockView.picked).map(findItem).filter(Boolean).map(function (x) { return { item: x, ev: evOf(x) }; });
     b.classList.remove('confirm'); clearTimeout(b._t); b.disabled = !picked.length;
-    b.textContent = picked.length ? 'Продать ' + picked.length + ' за ' + sumLabel(picked) : 'Отметь номера для продажи';
+    b.textContent = picked.length ? 'Продать ' + picked.length + ' · ' + sumLabel(picked) : 'Отметь номера';
+    var u = $('upgPicked'), nu = picked.filter(function (m) { return upgOk(m.item); }).length;
+    if (u) { u.disabled = !nu; u.textContent = nu > 10 ? 'В апгрейд · 10' : nu ? 'В апгрейд · ' + nu : 'В апгрейд'; }
   }
+  // ----- выбор пальцем: долгое нажатие на номер включает выбор; провёл по кружкам — отметил всё подряд
+  var sdrag = null, spress = null, stockNoClick = 0;
+  function stockRows() { return Array.prototype.slice.call(document.querySelectorAll('#stockList [data-num]')); }
+  function stockSetPick(el, on) {
+    var id = el.getAttribute('data-num'), x = findItem(id);
+    if (!x || x.lock || !!stockView.picked[id] === on) return false;
+    if (on) stockView.picked[id] = true; else delete stockView.picked[id];
+    el.classList.toggle('picked', on);
+    var pk = el.querySelector('.pick'); if (pk) { pk.classList.toggle('on', on); pk.innerHTML = on ? CHECK : ''; }
+    return true;
+  }
+  function stockDragStart(el, x, y) {
+    var rows = stockRows();
+    sdrag = { on: !stockView.picked[el.getAttribute('data-num')], from: rows.indexOf(el), at: rows.indexOf(el), x: x, y: y, raf: 0 };
+    var it = findItem(el.getAttribute('data-num'));
+    if (it && it.lock) toast('Закреплённый номер не выбрать');
+    if (stockSetPick(el, sdrag.on)) buzz('sel');
+    updatePicked(); stockNoClick = Date.now() + 700;
+    sdrag.raf = requestAnimationFrame(stockAutoScroll);
+  }
+  // отмечаем всё между первым номером и тем, что под пальцем, — как в галерее телефона
+  function stockDragMove(x, y) {
+    sdrag.x = x; sdrag.y = y;
+    var hit = document.elementFromPoint(x, y), el = hit && hit.closest ? hit.closest('#stockList [data-num]') : null;
+    if (!el) return;
+    var rows = stockRows(), i = rows.indexOf(el);
+    if (i < 0 || i === sdrag.at) return;
+    var a = Math.min(sdrag.from, i), b = Math.max(sdrag.from, i), was = Math.min(sdrag.from, sdrag.at), wasB = Math.max(sdrag.from, sdrag.at), changed = false;
+    for (var k = Math.min(a, was); k <= Math.max(b, wasB); k++) {
+      if (k >= a && k <= b) changed = stockSetPick(rows[k], sdrag.on) || changed;
+      else changed = stockSetPick(rows[k], !sdrag.on) || changed;   // палец вернулся назад — снимаем лишнее
+    }
+    sdrag.at = i;
+    if (changed) { buzz('sel'); updatePicked(); }
+  }
+  function stockDragEnd() { if (!sdrag) return; cancelAnimationFrame(sdrag.raf); sdrag = null; stockNoClick = Date.now() + 400; }
+  // палец у верхнего или нижнего края — список прокручивается сам
+  function stockAutoScroll() {
+    if (!sdrag) return;
+    var y = sdrag.y, h = innerHeight, v = y < 110 ? -(110 - y) / 5 : y > h - 170 ? (y - (h - 170)) / 5 : 0;
+    if (v) { $('page').scrollTop += v; stockDragMove(sdrag.x, sdrag.y); }
+    sdrag.raf = requestAnimationFrame(stockAutoScroll);
+  }
+  function stockPressEnd() { if (spress) { clearTimeout(spress.t); spress = null; } stockDragEnd(); }
   function stockHtml() {
     var all = stockItems(), view = S.stockView || 'list';
     var counts = [0, 0, 0, 0, 0, 0, 0], locked = 0;
     all.forEach(function (m) { counts[m.ev.tier]++; if (m.item.lock) locked++; });
     var f = stockView.filter;
     var html = pageHead('Склад', all.length ? '<button class="sel-btn" type="button" id="selToggle">' + (stockView.select ? 'Готово' : 'Выбрать') + '</button>' : '');
-    html += '<div class="sum"><b class="mono">' + all.length + '</b> из ' + CAP + (all.length ? ' · всего <b class="mono">' + esc(sumLabel(all)) + '</b>' : '') +
-      (all.length >= CAP ? ' · <span class="minus">склад полон</span>' : '') + '</div>';
-    html += '<div class="cap"><i style="width:' + Math.min(100, all.length / CAP * 100) + '%"></i></div>';
+    html += '<div class="stock-sum' + (all.length >= CAP ? ' full' : '') + '"><div><b class="mono">' + (all.length ? esc(sumLabel(all)) : '0 ₽') + '</b><span>стоимость склада</span></div>' +
+      '<div class="ss-r"><b class="mono">' + nf.format(all.length) + '</b><span>' + (all.length >= CAP ? 'склад полон' : 'из ' + nf.format(CAP)) + '</span></div>' +
+      '<span class="ss-bar"><i style="width:' + Math.min(100, all.length / CAP * 100) + '%"></i></span></div>';
     if (all.length) html += '<div class="stock-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>' +
-      '<input class="inp" id="stockQ" inputmode="numeric" maxlength="7" placeholder="Найти по цифрам, например 777" value="' + esc(stockView.q) + '" aria-label="Поиск по цифрам"></div>';
+      '<input class="inp" id="stockQ" inputmode="numeric" maxlength="7" placeholder="Найти по цифрам, например 777" value="' + esc(stockView.q) + '" aria-label="Поиск по цифрам">' +
+      '<button class="sq-x" type="button" id="stockQx" aria-label="Очистить поиск"' + (stockView.q ? '' : ' hidden') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>';
     if (!all.length) return html + '<div class="empty"><b>Склад пуст</b><span>Выпусти первый номер на главном экране — он появится здесь.</span><button class="btn pri" type="button" data-back>На главную</button></div>';
     html += '<div class="chips"><button type="button" class="fchip' + (f === 'all' ? ' on' : '') + '" data-filter="all">Все · ' + all.length + '</button>';
     for (var t = 6; t >= 0; t--) if (counts[t]) html += '<button type="button" class="fchip' + (f === String(t) ? ' on' : '') + '" data-filter="' + t + '"><span class="td tc' + t + '"><i></i>' + TIER_PLURAL[t] + ' · ' + counts[t] + '</span></button>';
@@ -2385,15 +2481,15 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
     }).join('') + '</div><div class="views">' + VIEWS.map(function (v) {
       return '<button type="button" class="vbtn' + (view === v[0] ? ' on' : '') + '" data-view="' + v[0] + '" aria-label="' + v[1] + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + v[2] + '</svg></button>';
     }).join('') + '</div></div>';
-    html += '<div id="stockList">' + stockListHtml(all) + '</div>';
+    if (stockView.select) html += '<p class="sel-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V4.5a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v7.5A6.5 6.5 0 0 1 11.5 20h-.3a6 6 0 0 1-4.6-2.2L4 14.5a1.6 1.6 0 0 1 2.4-2.1L9 15"/></svg>Проведи пальцем по кружкам — отметишь много номеров подряд</p>';
+    html += '<div id="stockList"' + (stockView.select ? ' class="sel"' : '') + '>' + stockListHtml(all) + '</div>';
     if (stockView.select) {
-      var picked = all.filter(function (m) { return stockView.picked[m.item.id]; });
       html += '<div class="page-foot sel-foot"><div class="sel-links"><button type="button" id="pickAll">Выбрать все</button><button type="button" id="pickCommons">Обычные</button><button type="button" id="pickNone">Снять</button></div>' +
-        '<button class="btn pri wide" type="button" id="sellPicked"' + (picked.length ? '' : ' disabled') + '>' +
-        (picked.length ? 'Продать ' + picked.length + ' за ' + esc(sumLabel(picked)) : 'Отметь номера для продажи') + '</button></div>';
+        '<div class="actions"><button class="btn" type="button" id="upgPicked" disabled>В апгрейд</button><button class="btn pri" type="button" id="sellPicked" disabled>Отметь номера</button></div></div>';
     } else {
       var commons = all.filter(function (m) { return m.ev.tier === 0 && !m.item.lock; });
-      if (commons.length) html += '<div class="page-foot"><button class="btn wide" type="button" id="sellCommons">Продать обычные · ' + commons.length + ' за ' + money(sumEst(commons)) + '</button><small>Закреплённые номера не продаются</small></div>';
+      html += '<div class="page-foot">' + (commons.length ? '<button class="btn wide" type="button" id="sellCommons">Продать обычные · ' + commons.length + ' за ' + money(sumEst(commons)) + '</button>' : '') +
+        '<small>Зажми номер, чтобы выбрать несколько · закреплённые не продаются</small></div>';
     }
     return html;
   }
@@ -2904,6 +3000,12 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   // ----- «Что нового»: список изменений по версиям; новое показывается один раз после обновления
   var CHANGES = [
+    { v: '0.15', date: '15 октября', items: [
+      'Апгрейдер починен: цель всегда дороже ставки, множитель — только до самого дорогого номера в игре',
+      'Апгрейдер стал понятнее: сначала ставка, потом множитель, потом цель; дуга окрашена в цвет редкости цели',
+      'Склад: зажми номер — включится выбор; проведи пальцем по кружкам — отметишь много номеров подряд',
+      'Склад: отмеченные номера можно сразу отправить в апгрейд; поиск очищается крестиком',
+      'Промокод в виде билета, гарант с понятной подсказкой: подсвечен — сработает в выбранной пачке'] },
     { v: '0.14', date: '14 октября', items: [
       'Достижения: 12 заданий с наградами — в меню и в профиле',
       'Награда дня — календарь на неделю: видно, сколько дадут завтра и дальше',
@@ -3101,26 +3203,57 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   setInterval(pollChat, 4000);
   $('page').addEventListener('input', function (e) {
-    if (e.target.id === 'upgRange') { if (!upg.busy) upgSetMult(rangeToM(Number(e.target.value)), true); return; }
+    if (e.target.id === 'upgRange') { if (!upg.busy) upgSetMult(rangeToM(Number(e.target.value), upgRangeNow()), true); return; }
     if (e.target.id === 'stockQ') {
       var v = e.target.value.replace(/\D/g, '').slice(0, 7);
       if (v !== e.target.value) e.target.value = v;
       stockView.q = v; stockView.limit = 200;
       var sl = $('stockList'); if (sl) sl.innerHTML = stockListHtml(stockItems());
+      var qx = $('stockQx'); if (qx) qx.hidden = !v;
       return;
     }
     if (e.target.id === 'chatIn') { var t = e.target; t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; }
   });
+  $('page').addEventListener('pointerdown', function (e) {
+    if (!pages.length || pages[pages.length - 1].name !== 'stock' || e.button > 0) return;
+    var el = e.target.closest && e.target.closest('#stockList [data-num]'); if (!el) return;
+    if (stockView.select && e.target.closest('.pick')) { e.preventDefault(); stockDragStart(el, e.clientX, e.clientY); return; }
+    var id = el.getAttribute('data-num'), x0 = e.clientX, y0 = e.clientY;
+    stockPressEnd();
+    spress = { x: x0, y: y0, t: setTimeout(function () {
+      spress = null;
+      if (!stockView.select) {
+        // включаем выбор так, чтобы номер под пальцем остался на том же месте экрана
+        var pg = $('page'), y = pg.scrollTop, was = el.getBoundingClientRect().top;
+        stockView.select = true; stockView.picked = {}; replacePage('stock'); pg.scrollTop = y;
+        var now = document.querySelector('#stockList [data-num="' + id + '"]');
+        if (now) pg.scrollTop += now.getBoundingClientRect().top - was;
+      }
+      var row = document.querySelector('#stockList [data-num="' + id + '"]');
+      if (row) { stockDragStart(row, x0, y0); buzz('hard'); }
+    }, 420) };
+  });
+  $('page').addEventListener('pointermove', function (e) {
+    if (spress && Math.abs(e.clientX - spress.x) + Math.abs(e.clientY - spress.y) > 10) { clearTimeout(spress.t); spress = null; }
+    if (sdrag) stockDragMove(e.clientX, e.clientY);
+  });
+  $('page').addEventListener('pointerup', stockPressEnd);
+  $('page').addEventListener('pointercancel', stockPressEnd);
+  // пока отмечаешь пальцем, страница не прокручивается (прокрутку у края делает сама игра)
+  $('page').addEventListener('touchmove', function (e) { if (sdrag) e.preventDefault(); }, { passive: false });
+  $('page').addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('#stockList')) e.preventDefault(); });
   $('page').addEventListener('keydown', function (e) {
     if (e.target.id === 'chatIn' && e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); sendChat(); }
   });
 
   // промокоды: игрок вводит код в меню
   function openPromo() {
-    openSheet('<div class="promo-hero"><span class="promo-ic">🎁</span><b>Промокод</b><span>Введи код — получишь деньги или номер</span></div>' +
-      '<input class="inp big mono promo-in" id="promoIn" maxlength="16" placeholder="ВВЕДИ КОД" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Промокод">' +
+    openSheet('<div class="ticket"><div class="tk-top"><span class="tk-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1 0 1.5 2.5 1 5 1zM12 7c1.5-3 5-3.5 5-1 0 1.5-2.5 1-5 1z"/></svg></span>' +
+      '<b>Промокод</b><span>Деньги или номер — сразу тебе</span></div><div class="tk-cut" aria-hidden="true"></div>' +
+      '<div class="tk-bot"><label class="tk-l" for="promoIn">Код из канала или ивента</label>' +
+      '<input class="inp big mono promo-in" id="promoIn" maxlength="16" placeholder="FH····" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done"></div></div>' +
       '<p class="msg promo-msg" id="promoMsg"></p><button class="btn pri wide promo-go" type="button" id="promoGo">Активировать</button>' +
-      '<p class="note">Промокоды раздают в канале игры и на ивентах. Каждый код можно ввести один раз.</p>');
+      '<p class="note">Каждый код можно ввести один раз. Регистр букв не важен.</p>');
   }
   function redeem() {
     var code = val('promoIn').toUpperCase().replace(/\s/g, '');
@@ -3251,42 +3384,47 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
 
   // ----- апгрейдер: ставишь до 10 номеров и выбираешь цель — конкретный номер с точной ценой.
-  // Шанс = 80% × ставка / цена цели (не больше 90%): какой показан, такой и есть — сервер считает так же.
-  var MULTS = [1.5, 2, 3, 5, 10, 20, 50], M_MIN = 1.2, M_MAX = 100, RR_UP = 96, RING = 2 * Math.PI * RR_UP;
+  // Шанс = 80% × ставка / цена цели: какой показан, такой и есть — сервер считает так же.
+  // Цель всегда дороже ставки хотя бы на 10% и берётся только из номеров, которые есть в игре.
+  var MULTS = [1.5, 2, 3, 5, 10, 20, 50], M_MIN = 1.1, M_MAX = 100, RR_UP = 96, RING = 2 * Math.PI * RR_UP;
   var upg = { ids: [], m: 2, busy: false, last: null, angle: 0, more: 150, prize: null };
-  function mToRange(m) { return Math.round(1000 * Math.log(m / M_MIN) / Math.log(M_MAX / M_MIN)); }
-  function rangeToM(v) { return M_MIN * Math.pow(M_MAX / M_MIN, v / 1000); }
+  // Границы множителя для этой ставки: сверху — самый дорогой номер в игре (Secret не в счёт).
+  function upgRange(val) { var hi = val > 0 ? Math.min(M_MAX, G.prizeMax() / val) : M_MAX; return { lo: M_MIN, hi: Math.max(M_MIN, hi), ok: !val || hi >= M_MIN }; }
+  function upgRangeNow() { return upgRange(sumEst(upgStake())); }
+  function mToRange(m, r) { return r.hi <= r.lo * 1.001 ? 1000 : Math.round(1000 * Math.log(m / r.lo) / Math.log(r.hi / r.lo)); }
+  function rangeToM(v, r) { return r.lo * Math.pow(r.hi / r.lo, v / 1000); }
+  function clampM(m, r) { return Math.max(r.lo, Math.min(r.hi, m)); }
   function pctReal(p) { var v = p * 100; return (v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toFixed(3)).replace('.', ',') + '%'; }
   function multLabel(m) { return '×' + (m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toFixed(1).replace('.', ',')); }
-  // цель для текущей ставки и множителя — один раз на сочетание, «Другой номер» подбирает новую
+  // цель для текущей ставки и множителя — одна на сочетание; «Другой номер» подбирает новую той же цены
   function upgPrize(stake, fresh) {
-    var val = sumEst(stake), key = val + '|' + upg.m.toFixed(3);
+    var val = sumEst(stake);
     if (!stake.length) { upg.prize = null; return null; }
+    var r = upgRange(val), m = clampM(upg.m, r), key = val + '|' + m.toFixed(3);
     if (upg.prize && upg.prize.key === key && !fresh) return upg.prize;
-    var pz = G.prizeFor(val * upg.m), top = stake.reduce(function (x, y) { return E.marketPrice(y.ev) > E.marketPrice(x.ev) ? y : x; });
+    if (!r.ok) { upg.prize = null; return null; }
+    var pz = G.prizeFor(val * m, val * 1.1, fresh && upg.prize ? upg.prize.d : null);
+    if (!pz) { upg.prize = null; return null; }
+    var top = stake.reduce(function (x, y) { return E.marketPrice(y.ev) > E.marketPrice(x.ev) ? y : x; });
     var ck = S.country !== 'any' && countryOf(S.country) ? S.country : top.item.c, c = countryOf(ck);
     pz.c = c.key; pz.net = c.nets[Math.floor(Math.random() * c.nets.length)][0]; pz.key = key;
     upg.prize = pz;
     return pz;
   }
   function upgChanceNow(stake, pz) { return pz ? G.upgChanceFor(sumEst(stake), pz.price) : 0; }
-  function upgCanGo(stake, pz) { return !!pz && pz.price >= sumEst(stake) * 1.1; }
+  function upgCanGo(stake, pz) { return !!pz && stake.length > 0 && pz.price >= sumEst(stake) * 1.1; }
   function upgOk(x) { return !!x && !x.lock && !isSecret(evOf(x)); }
   function upgStake() {
     upg.ids = upg.ids.filter(function (id) { return upgOk(findItem(id)); });
     return upg.ids.map(function (id) { var x = findItem(id); return { item: x, ev: evOf(x) }; });
   }
   function upgChance(m) { return G.upgChance(m); }
-  // в какую редкость попадёт цель (как в E.findNumberNear: границы редкости ±12%); -1 — номера такой цены не бывает
-  function tierForPrice(p) {
-    for (var t = 0; t < E.TIERS.length - 1; t++) { var pr = E.TIERS[t].price; if (p >= pr[0] * 0.88 && p <= pr[1] * 1.12) return t; }
-    return -1;
-  }
+  function tierColor(t) { return t > 0 && t < 6 ? 'var(--c' + t + ')' : 'var(--accent)'; }
   function dialSvg(ch) {
     var ticks = '';
     for (var i = 0; i < 60; i++) ticks += '<line x1="120" y1="' + (i % 5 ? 9 : 5) + '" x2="120" y2="14"' + (i % 5 ? '' : ' class="mj"') + ' transform="rotate(' + i * 6 + ' 120 120)"/>';
     return '<svg class="dial" viewBox="0 0 240 240" aria-hidden="true"><defs>' +
-      '<linearGradient id="upgArc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in srgb, var(--accent) 45%, #fff)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient>' +
+      '<linearGradient id="upgArc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in srgb, var(--tc) 45%, #fff)"/><stop offset="1" style="stop-color:var(--tc)"/></linearGradient>' +
       '</defs>' +
       '<g class="ticks">' + ticks + '</g>' +
       '<circle class="track" cx="120" cy="120" r="96"/>' +
@@ -3295,38 +3433,42 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
         '<circle class="trail" id="upgTrailEl" cx="120" cy="120" r="96" transform="rotate(-150 120 120)" stroke-dasharray="' + (RING * 60 / 360).toFixed(2) + ' ' + RING.toFixed(2) + '"/>' +
         '<circle class="kb" cx="120" cy="24" r="11"/><circle class="kb-dot" cx="120" cy="24" r="4.2"/></g></svg>';
   }
-  function upgTargetHtml(stake, pz) {
-    if (!stake.length || !pz) return '<b class="mono">—</b><small>выбери ставку</small>';
-    return '<b class="mono tc' + pz.t + '">' + money(pz.price) + '</b><small><span class="td tc' + pz.t + '"><i></i></span> ' + esc(TIER_NAMES[pz.t]) + ' · ' + multLabel(pz.price / sumEst(stake)) + '</small>';
-  }
+  // карточка цели: сам номер, редкость, цена, во сколько раз дороже ставки
   function upgPrizeHtml(stake, pz) {
-    if (!stake.length || !pz) return '';
+    if (!stake.length) return '';
+    var val = sumEst(stake);
+    if (!pz) return '<div class="upg-prize none"><span class="up-l">Цель</span><b>Дороже номеров в игре нет</b><span class="up-r">Ставка ' + money(val) + ' — убери часть номеров, чтобы было куда расти. Самый дорогой номер стоит ' + money(G.prizeMax()) + '.</span></div>';
     var item = { c: pz.c, net: pz.net, d: pz.d };
-    return '<div class="upg-prize tier' + pz.t + '"><span class="up-l">Цель — этот номер</span>' +
+    return '<div class="upg-prize tier' + pz.t + '" style="--tc:' + tierColor(pz.t) + '"><div class="up-h"><span class="up-l">Цель — этот номер</span><span class="up-tag">' + esc(TIER_NAMES[pz.t]) + '</span></div>' +
       '<span class="up-num">' + logoHtml(opOf(item), 'md') + '<b class="mono tc' + pz.t + '">' + esc(fmtFull(item)) + '</b></span>' +
-      '<span class="up-r"><span>' + esc(TIER_NAMES[pz.t]) + ' · ' + money(pz.price) + '</span><button class="link-btn" type="button" id="upgReroll">Другой номер</button></span></div>' +
-      (upgCanGo(stake, pz) ? '' : '<p class="note" style="margin:6px 4px 0">Цель должна быть дороже ставки хотя бы на 10% — сдвинь ползунок вправо.</p>');
+      '<div class="up-f"><span class="up-p"><b class="mono">' + money(pz.price) + '</b><small>' + multLabel(pz.price / val) + ' к ставке</small></span>' +
+      '<button class="up-re" type="button" id="upgReroll"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"/></svg>Другой номер</button></div></div>';
+  }
+  function upgChipsHtml(r, on) {
+    return MULTS.map(function (m) { return '<button type="button" data-mult="' + m + '"' + (Math.abs(m - upg.m) < 0.01 && on ? ' class="on"' : '') + (!on || m > r.hi + 1e-9 ? ' disabled' : '') + '>×' + String(m).replace('.', ',') + '</button>'; }).join('');
   }
   function upgHtml() {
-    var stake = upgStake(), val = sumEst(stake), pz = upgPrize(stake), ch = upgChanceNow(stake, pz), L = upg.last;
+    var stake = upgStake(), val = sumEst(stake), r = upgRange(val), pz = upgPrize(stake), ch = upgChanceNow(stake, pz), L = upg.last;
+    var on = stake.length > 0 && r.ok;
     var html = pageHead('Апгрейдер', '<button class="ghost round" type="button" id="upgHelp" aria-label="Как это работает"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7M12 17.2v.1"/></svg></button>');
-    html += '<div class="dial-wrap' + (L ? (L.win ? ' win' : ' lose') : '') + '" id="dialWrap">' + dialSvg(ch) +
-      '<div class="dial-c"><b class="mono" id="upgPct">' + (L ? (L.win ? multLabel(L.m) : 'мимо') : (stake.length ? pctReal(ch) : '—')) + '</b><span id="upgPctL">' + (L ? (L.win ? (L.cash ? 'деньгами' : 'новый номер') : 'номера сгорели') : 'точный шанс') + '</span></div></div>';
-    html += '<div class="upg-mult"><div class="um-top"><span>Множитель</span><b class="mono" id="upgMult">' + multLabel(upg.m) + '</b></div>' +
-      '<input class="um-range" type="range" id="upgRange" min="0" max="1000" step="1" value="' + mToRange(upg.m) + '" aria-label="Множитель"' + (stake.length ? '' : ' disabled') + '>' +
-      '<div class="um-chips">' + MULTS.map(function (m) { return '<button type="button" data-mult="' + m + '"' + (Math.abs(m - upg.m) < 0.01 ? ' class="on"' : '') + '>' + multLabel(m) + '</button>'; }).join('') + '</div></div>';
-    html += '<div class="upg-stats"><div class="us"><span>Ставка</span><b class="mono">' + (stake.length ? money(val) : '—') + '</b><small>' + (stake.length ? stake.length + ' ' + plural(stake.length, 'номер', 'номера', 'номеров') + ' из 10' : 'до 10 номеров') + '</small></div>' +
-      '<span class="us-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>' +
-      '<div class="us tgt" id="upgTgt"><span>Цель</span>' + upgTargetHtml(stake, pz) + '</div></div>';
-    html += '<div id="upgPrizeBox">' + upgPrizeHtml(stake, pz) + '</div>';
+    html += '<div class="dial-wrap' + (L ? (L.win ? ' win' : ' lose') : '') + '" id="dialWrap" style="--tc:' + tierColor(pz ? pz.t : 0) + '">' + dialSvg(ch) +
+      '<div class="dial-c"><b class="mono" id="upgPct">' + (L ? (L.win ? multLabel(L.m) : 'мимо') : (pz ? pctReal(ch) : '—')) + '</b><span id="upgPctL">' +
+      (L ? (L.win ? (L.cash ? 'деньгами' : 'новый номер') : 'номера сгорели') : pz ? 'точный шанс' : stake.length ? 'нет цели' : 'выбери ставку') + '</span></div></div>';
     if (L) html += upgResultHtml(L);
-    html += '<div class="group-t">Ставка</div>';
-    if (!stake.length) html += '<button class="stake-empty" type="button" id="stakeAdd"><span class="se-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><b>Выбрать номера со склада</b><small>До 10 номеров. Закреплённые и Secret не участвуют.</small></button>';
+    // 1. ставка
+    html += '<div class="upg-sh"><b>Ставка</b>' + (stake.length ? '<span class="mono">' + money(val) + ' · ' + stake.length + ' из 10</span>' : '<span>до 10 номеров</span>') + '</div>';
+    if (!stake.length) html += '<button class="stake-empty" type="button" id="stakeAdd"><span class="se-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><b>Выбрать номера со склада</b><small>Закреплённые и Secret не участвуют</small></button>';
     else html += '<div class="stake-strip">' + stake.map(function (m) {
       return '<div class="sm-card tier' + m.ev.tier + '"><button class="sm-x" type="button" data-unstake="' + m.item.id + '" aria-label="Убрать из ставки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></button>' +
         '<span class="sm-top">' + logoHtml(opOf(m.item), 'sm') + flagSvg(m.item.c) + '</span><span class="sm-cc mono">+' + esc(countryOf(m.item.c).code) + ' (' + esc(m.item.net) + ')</span>' +
         '<span class="sm-num mono tc' + m.ev.tier + '">' + esc(fmtDigits(m.item.d, m.item.c)) + '</span><span class="sm-p mono">' + money(E.marketPrice(m.ev)) + '</span></div>';
     }).join('') + (stake.length < 10 ? '<button class="sm-add" type="button" id="stakeAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button>' : '') + '</div>';
+    // 2. во сколько раз дороже
+    html += '<div class="upg-mult' + (on ? '' : ' off') + '"><div class="um-top"><span>Во сколько раз дороже</span><b class="mono" id="upgMult">' + (pz ? multLabel(pz.price / val) : multLabel(clampM(upg.m, r))) + '</b></div>' +
+      '<input class="um-range" type="range" id="upgRange" min="0" max="1000" step="1" value="' + mToRange(clampM(upg.m, r), r) + '" aria-label="Множитель"' + (on && r.hi > r.lo * 1.001 ? '' : ' disabled') + '>' +
+      '<div class="um-chips">' + upgChipsHtml(r, on) + '</div></div>';
+    // 3. цель
+    html += '<div id="upgPrizeBox">' + upgPrizeHtml(stake, pz) + '</div>';
     html += '<div class="sticky-actions"><button class="btn pri wide upg-go" type="button" id="upgGo"' + (upgCanGo(stake, pz) ? '' : ' disabled') + '>' + upgGoLabel(stake, pz) + '</button></div>';
     return html;
   }
@@ -3340,41 +3482,44 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   }
   function upgGoLabel(stake, pz) {
     if (!stake.length) return 'Выбери номера для ставки';
-    if (!upgCanGo(stake, pz)) return 'Цель дешевле ставки';
+    if (!pz) return 'Ставка слишком дорогая';
     return 'Апгрейд ' + multLabel(pz.price / sumEst(stake)) + ' · шанс ' + pctReal(upgChanceNow(stake, pz));
   }
   // смена множителя без перерисовки страницы: дуга, шанс и цель обновляются на месте.
   // Пока тянешь ползунок — шанс по множителю; номер-цель подбирается, когда палец замер.
   var upgTimer = 0;
   function upgSetMult(m, fromRange) {
-    upg.m = Math.max(M_MIN, Math.min(M_MAX, m)); upg.last = null;
+    var stake = upgStake(), r = upgRange(sumEst(stake));
+    upg.m = clampM(m, r); upg.last = null;
     if (!$('upgMult')) return;
     $('upgMult').textContent = multLabel(upg.m);
-    if (!fromRange) $('upgRange').value = mToRange(upg.m);
+    if (!fromRange) $('upgRange').value = mToRange(upg.m, r);
     document.querySelectorAll('.um-chips [data-mult]').forEach(function (b) { b.classList.toggle('on', Math.abs(Number(b.getAttribute('data-mult')) - upg.m) < 0.01); });
     $('dialWrap').classList.remove('win', 'lose');
     var res = document.querySelector('.upg-res'); if (res) res.remove();
-    var stake = upgStake(); if (!stake.length) return;
-    var rough = Math.min(0.9, 0.8 / upg.m);
+    if (!stake.length) return;
+    var rough = 0.8 / upg.m;
     $('upgArcEl').setAttribute('stroke-dasharray', (rough * RING).toFixed(2) + ' ' + RING.toFixed(2));
     $('upgPct').textContent = '≈' + pctReal(rough); $('upgPctL').textContent = 'подбираем цель…';
     clearTimeout(upgTimer);
     upgTimer = setTimeout(function () { upgPrize(stake); upgApplyPrize(); }, fromRange ? 160 : 0);
   }
   function upgApplyPrize() {
-    var stake = upgStake(), pz = upg.prize, ch = upgChanceNow(stake, pz);
+    var stake = upgStake(), pz = upg.prize, ch = upgChanceNow(stake, pz), val = sumEst(stake);
     if (!$('upgPct')) return;
+    $('dialWrap').style.setProperty('--tc', tierColor(pz ? pz.t : 0));
     $('upgArcEl').setAttribute('stroke-dasharray', (ch * RING).toFixed(2) + ' ' + RING.toFixed(2));
-    $('upgPct').textContent = pctReal(ch); $('upgPctL').textContent = 'точный шанс';
-    $('upgTgt').innerHTML = '<span>Цель</span>' + upgTargetHtml(stake, pz);
+    $('upgPct').textContent = pz ? pctReal(ch) : '—'; $('upgPctL').textContent = pz ? 'точный шанс' : 'нет цели';
+    if (pz) $('upgMult').textContent = multLabel(pz.price / val);
     $('upgPrizeBox').innerHTML = upgPrizeHtml(stake, pz);
     var go = $('upgGo'); go.disabled = !upgCanGo(stake, pz); go.textContent = upgGoLabel(stake, pz);
   }
   function openUpgHelp() {
     var html = '<h2>Как работает апгрейдер</h2><div class="group flat">' +
       '<div class="row"><span class="t">Ставка<small>До 10 номеров со склада. Закреплённые и Secret не участвуют.</small></span></div>' +
-      '<div class="row"><span class="t">Цель<small>Ползунком выбираешь, во сколько раз дороже номер хочешь. Игра подбирает конкретный номер с точной ценой — его видно заранее, «Другой номер» подберёт новый.</small></span></div>' +
-      '<div class="row"><span class="t">Точный шанс<small>Шанс = 80% × стоимость ставки ÷ цена цели (не больше 90%). Ставка 10 000 ₽ на номер за 100 000 ₽ — шанс 8%. Сервер считает ровно так же.</small></span></div>' +
+      '<div class="row"><span class="t">Цель<small>Ползунком выбираешь, во сколько раз дороже номер хочешь — от ×1,1. Игра подбирает настоящий номер с точной ценой; номеров любой цены не бывает (между редкостями есть разрывы), поэтому множитель цели может немного отличаться от ползунка. «Другой номер» подберёт номер той же цены.</small></span></div>' +
+      '<div class="row"><span class="t">Точный шанс<small>Шанс = 80% × стоимость ставки ÷ цена цели. Ставка 10 000 ₽ на номер за 100 000 ₽ — шанс 8%. Сервер считает ровно так же.</small></span></div>' +
+      '<div class="row"><span class="t">Потолок<small>Самый дорогой номер в игре сейчас — ' + money(G.prizeMax()) + '. Если ставка дороже, расти некуда: убери часть номеров.</small></span></div>' +
       '<div class="row"><span class="t">Выигрыш<small>Бегунок остановился на цветной дуге — именно этот номер попадает на склад.</small></span></div>' +
       '<div class="row"><span class="t">Проигрыш<small>Номера ставки сгорают.</small></span></div>' +
       '<div class="row"><span class="t">Честно<small>В среднем апгрейдер возвращает 80% ставки — как в любом казино, игра в плюсе.</small></span></div></div>' +
@@ -3598,7 +3743,18 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
 
   $('page').addEventListener('click', function (e) {
     var t = e.target, el;
+    // нажатие, которое закончило выбор пальцем, — не открывает номер и не снимает отметку
+    if (Date.now() < stockNoClick && t.closest('#stockList')) { stockNoClick = 0; return; }
     if (t.closest('[data-back]')) { goBack(); return; }
+    if (t.closest('#stockQx')) { stockView.q = ''; stockView.limit = 200; var qi = $('stockQ'); if (qi) qi.value = ''; t.closest('#stockQx').hidden = true; var sl0 = $('stockList'); if (sl0) sl0.innerHTML = stockListHtml(stockItems()); return; }
+    if (t.closest('#upgPicked')) {
+      var cand = Object.keys(stockView.picked).map(findItem).filter(upgOk).sort(function (a, b) { return E.marketPrice(evOf(b)) - E.marketPrice(evOf(a)); });
+      if (!cand.length) return;
+      upg.ids = cand.slice(0, 10).map(function (x) { return x.id; }); upg.last = null; upg.prize = null;
+      stockView.select = false; stockView.picked = {};
+      if (cand.length > 10) toast('В ставку — 10 самых дорогих');
+      openPage('upg'); buzz('sel'); return;
+    }
     if ((el = t.closest('[data-filter]'))) { stockView.filter = el.getAttribute('data-filter'); stockView.limit = 200; replacePage('stock'); buzz('sel'); return; }
     if (t.closest('#moreStock')) { stockView.limit += 200; replacePage('stock'); return; }
     if ((el = t.closest('[data-num]'))) {

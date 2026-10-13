@@ -231,17 +231,40 @@
   function upgChance(m) { return 0.8 / m; }   // игра забирает 20% ставки в среднем
   // Шанс апгрейда на конкретный номер: 80% × ставка / цена цели, не больше 90%.
   function upgChanceFor(val, price) { return Math.min(0.9, 0.8 * val / price); }
-  // Цель апгрейда — конкретный номер с ценой как можно ближе к target. У редкостей между ценами
-  // есть разрывы (например, 8 000 → 35 000), поэтому цель «прилипает» к ближайшей существующей цене.
-  function prizeFor(target) {
-    var best = null;
-    for (var t = 0; t < E.TIERS.length - 1; t++) {
-      var pr = E.TIERS[t].price, aim = Math.min(pr[1], Math.max(pr[0], target)), dist = Math.abs(Math.log(aim / target));
-      if (!best || dist < best.dist) best = { t: t, aim: aim, dist: dist };
+  // Лестница цен для апгрейдера: настоящие номера всех редкостей, кроме Secret, по возрастанию цены.
+  // Между редкостями есть разрывы (например, 8 000 → 35 000), поэтому цель выбирается только из того, что есть.
+  var LADDER = null, LADDER_BY = {};
+  function ladderAdd(t, n) {
+    for (var i = 0; i < n; i++) {
+      var d = E.digitsForTier(t).join(''), ev = evaluate(d), p = E.marketPrice(ev);
+      if (ev.tier !== t) continue;
+      var st = LADDER_BY[p];
+      if (!st) { st = LADDER_BY[p] = { price: p, t: t, ds: [] }; LADDER = null; }
+      if (st.ds.length < 8 && st.ds.indexOf(d) < 0) st.ds.push(d);
     }
-    var d = E.findNumberNear(best.aim, 0.06, 500) || E.findNumberNear(best.aim, 0.12, 1200) || E.digitsForTier(best.t).join('');
-    var ev = evaluate(d);
-    return { d: d, price: E.marketPrice(ev), t: ev.tier };
+  }
+  function ladder() {
+    if (!Object.keys(LADDER_BY).length) for (var t = 0; t < E.TIERS.length - 1; t++) ladderAdd(t, t < 3 ? 40 : 80);
+    if (!LADDER) LADDER = Object.keys(LADDER_BY).map(function (k) { return LADDER_BY[k]; }).sort(function (a, b) { return a.price - b.price; });
+    return LADDER;
+  }
+  // Самая дорогая цель, которая есть в игре (Secret не в счёт).
+  function prizeMax() { var L = ladder(); return L[L.length - 1].price; }
+  // Цель апгрейда — конкретный номер с ценой как можно ближе к target, но не дешевле min.
+  // avoid — цифры прошлой цели («Другой номер» подбирает другой номер той же цены). null — целей нет.
+  function prizeFor(target, min, avoid) {
+    var L = ladder(), near = [];
+    for (var i = 0; i < L.length; i++) if (L[i].price >= (min || 0)) near.push({ st: L[i], dist: Math.abs(Math.log(L[i].price / target)) });
+    if (!near.length) return null;
+    near.sort(function (a, b) { return a.dist - b.dist; });
+    if (avoid && near[0].st.ds.length < 3) ladderAdd(near[0].st.t, 30);   // подкопить номеров этой цены для «Другой номер»
+    // «Другой номер»: та же цена, а если других номеров такой цены нет — соседняя (до ±8%)
+    for (var k = 0; k < near.length && near[k].dist <= near[0].dist + 0.08; k++) {
+      var ds = near[k].st.ds.filter(function (d) { return d !== avoid; });
+      if (ds.length) return { d: ds[Math.floor(rnd() * ds.length)], price: near[k].st.price, t: near[k].st.t };
+    }
+    var st = near[0].st;
+    return { d: st.ds[0], price: st.price, t: st.t };
   }
   // В какую редкость попадёт цель (как в E.findNumberNear: границы редкости ±12%); -1 — номера такой цены не бывает.
   function tierForPrice(p) {
@@ -653,7 +676,7 @@
     countries: countries, fmtFull: fmtFull, dayKey: dayKey, evaluate: evaluate, findItem: findItem, freeSlots: freeSlots,
     eventNow: eventNow, eventTitle: eventTitle, costOf: costOf, noticeNow: noticeNow, dailyStatus: dailyStatus,
     buyersFor: buyersFor, buyersToday: buyersToday, buyerState: buyerState, buyerAccepts: buyerAccepts, buyerPrice: buyerPrice,
-    upgChance: upgChance, upgChanceFor: upgChanceFor, prizeFor: prizeFor, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
+    upgChance: upgChance, upgChanceFor: upgChanceFor, prizeFor: prizeFor, prizeMax: prizeMax, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
     ops: OPS, adminAct: adminAct, worldOp: worldOp, gift: gift, GIFT_MAX: GIFT_MAX, playerStats: playerStats, achList: achList, achReady: achReady
   };
 });
