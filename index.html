@@ -1144,7 +1144,7 @@ html[data-holiday] .app { padding-top: calc(28px + var(--tg-content-safe-area-in
   if (booting) try { var pc = JSON.parse(localStorage.getItem(KEY + '-prefs')); if (pc) PREF_KEYS.forEach(function (k) { if (pc[k] !== undefined) S[k] = pc[k]; }); } catch (e) {}
   var SERVER_PREFS = ['country', 'sound', 'fast', 'theme', 'favs', 'batch', 'stockView'], prefsSent = '', prefsTimer = 0;
   // Адрес игры с сервером. Старая копия на GitHub Pages, открытая из Telegram, перекидывает сюда.
-  var GAME_URL = 'https://fin-hod.online/';
+  var GAME_URL = 'https://fin-hod.ru/';
   // Ссылка на игру в Telegram — её отправляют друзьям вместе с номером.
   var SHARE_URL = 'https://t.me/FinancoviHod_bot/play';
   // Настройки на сервер — с задержкой и только если поменялись.
