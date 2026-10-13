@@ -229,6 +229,20 @@
 
   /* ---------------- апгрейдер ---------------- */
   function upgChance(m) { return 0.8 / m; }   // игра забирает 20% ставки в среднем
+  // Шанс апгрейда на конкретный номер: 80% × ставка / цена цели, не больше 90%.
+  function upgChanceFor(val, price) { return Math.min(0.9, 0.8 * val / price); }
+  // Цель апгрейда — конкретный номер с ценой как можно ближе к target. У редкостей между ценами
+  // есть разрывы (например, 8 000 → 35 000), поэтому цель «прилипает» к ближайшей существующей цене.
+  function prizeFor(target) {
+    var best = null;
+    for (var t = 0; t < E.TIERS.length - 1; t++) {
+      var pr = E.TIERS[t].price, aim = Math.min(pr[1], Math.max(pr[0], target)), dist = Math.abs(Math.log(aim / target));
+      if (!best || dist < best.dist) best = { t: t, aim: aim, dist: dist };
+    }
+    var d = E.findNumberNear(best.aim, 0.06, 500) || E.findNumberNear(best.aim, 0.12, 1200) || E.digitsForTier(best.t).join('');
+    var ev = evaluate(d);
+    return { d: d, price: E.marketPrice(ev), t: ev.tier };
+  }
   // В какую редкость попадёт цель (как в E.findNumberNear: границы редкости ±12%); -1 — номера такой цены не бывает.
   function tierForPrice(p) {
     for (var t = 0; t < E.TIERS.length - 1; t++) { var pr = E.TIERS[t].price; if (p >= pr[0] * 0.88 && p <= pr[1] * 1.12) return t; }
@@ -311,7 +325,7 @@
   // Апгрейдер. a = { ids, m }. r — куда встал бегунок (0…1), выигрыш при r < шанса.
   OPS.upgrade = function (P, W, a, ctx) {
     var now = nowOf(ctx), m = Number(a.m), ids = (a.ids || []).filter(function (id, i, arr) { return arr.indexOf(id) === i; }), cs = countries(W);
-    if (MULTS.indexOf(m) < 0) fail('Такого множителя нет.');
+    if (!a.prize && MULTS.indexOf(m) < 0) fail('Такого множителя нет.');
     if (!ids.length) fail('Выберите номера для ставки.');
     if (ids.length > STAKE_MAX) fail('В ставке максимум ' + STAKE_MAX + ' номеров.');
     var stake = ids.map(function (id) {
@@ -322,6 +336,7 @@
       return x;
     });
     var val = stake.reduce(function (s, x) { return s + E.marketPrice(evaluate(x.d)); }, 0);
+    if (a.prize) return upgradeTo(P, W, a, ctx, stake, ids, val);
     var target = Math.round(val * m / 10) * 10, r = rnd(), win = r < upgChance(m);
     var set = {}; ids.forEach(function (id) { set[id] = true; });
     removeItems(P, set);
@@ -343,6 +358,31 @@
     } else logMoney(P, 'upgrade', 0, what + ' → мимо', { v: -val }, now);
     return res;
   };
+
+  // Апгрейд на выбранный номер: цена цели известна заранее, шанс считается от неё — какой показан, такой и есть.
+  function upgradeTo(P, W, a, ctx, stake, ids, val) {
+    var now = nowOf(ctx), cs = countries(W), pz = a.prize || {}, c = cs.map[pz.c], d = String(pz.d || '');
+    if (!/^\d{7}$/.test(d) || !c) fail('Цель не найдена — выбери её заново.');
+    var pev = evaluate(d);
+    if (isSecretTier(pev.tier)) fail('Такую цель выбрать нельзя.');
+    var price = E.marketPrice(pev);
+    if (price < val * 1.1) fail('Цель должна быть дороже ставки хотя бы на 10%.');
+    if (price > val * 200) fail('Цель слишком дорогая для такой ставки.');
+    var chance = upgChanceFor(val, price), r = rnd(), win = r < chance, set = {}, m = Math.round(price / val * 10) / 10;
+    ids.forEach(function (id) { set[id] = true; });
+    removeItems(P, set);
+    P.upg.n++;
+    var what = 'Апгрейд ×' + String(m).replace('.', ',') + ': ' + stake.length + ' ' + plural(stake.length, 'номер', 'номера', 'номеров');
+    var res = { win: win, r: r, val: val, price: price, chance: chance, m: m };
+    if (win) {
+      P.upg.win++;
+      var net = c.nets.some(function (n) { return n[0] === pz.net; }) ? pz.net : null;
+      var it = addItem(P, c, d, net, 'Получен в апгрейдере ×' + String(m).replace('.', ','), now);
+      res.item = it.id; res.tier = it.t;
+      logMoney(P, 'upgrade', 0, what + ' → номер', { v: price - val }, now);
+    } else logMoney(P, 'upgrade', 0, what + ' → мимо', { v: -val }, now);
+    return res;
+  }
 
   OPS.daily = function (P, W, a, ctx) {
     var now = nowOf(ctx), st = dailyStatus(P, now);
@@ -577,7 +617,7 @@
     countries: countries, fmtFull: fmtFull, dayKey: dayKey, evaluate: evaluate, findItem: findItem, freeSlots: freeSlots,
     eventNow: eventNow, eventTitle: eventTitle, costOf: costOf, noticeNow: noticeNow, dailyStatus: dailyStatus,
     buyersFor: buyersFor, buyersToday: buyersToday, buyerState: buyerState, buyerAccepts: buyerAccepts, buyerPrice: buyerPrice,
-    upgChance: upgChance, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
+    upgChance: upgChance, upgChanceFor: upgChanceFor, prizeFor: prizeFor, tierForPrice: tierForPrice, money: money, plural: plural, fmtMult: fmtMult,
     ops: OPS, adminAct: adminAct, worldOp: worldOp, gift: gift, GIFT_MAX: GIFT_MAX, playerStats: playerStats
   };
 });
